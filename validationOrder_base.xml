@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workOrder>
+    <order>
+        <validationOrder>
+            <recordInfo>
+                <dataDivider>
+                    <linkedRecordType>system</linkedRecordType>
+                    <linkedRecordId>divaData</linkedRecordId> <!-- system -->
+                </dataDivider>
+                <validationType>
+                    <linkedRecordType>validationType</linkedRecordType>
+                    <linkedRecordId>validationOrder</linkedRecordId>
+                </validationType>
+            </recordInfo>
+            <recordType>
+                <linkedRecordType>recordType</linkedRecordType>
+                <linkedRecordId></linkedRecordId> <!-- record type to validate against -->
+            </recordType>
+            <validateLinks></validateLinks> <!-- true || false -->
+            <metadataToValidate></metadataToValidate> <!-- new || existing -->
+        </validationOrder>
+    </order>
+    <record></record>
+</workOrder>

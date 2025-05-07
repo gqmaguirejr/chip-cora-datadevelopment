@@ -1,0 +1,36 @@
+{ 
+  "order": {
+    "name": "validationOrder",
+    "children": [
+      {
+        "name": "recordInfo",
+        "children": [
+          {
+            "name": "dataDivider",
+            "children": [
+              {"name": "linkedRecordType", "value": "system"    },
+              {"name": "linkedRecordId"  , "value": "divaData"}
+            ]
+          },
+          {
+            "name": "validationType",
+            "children": [
+              {"name": "linkedRecordType", "value": "validationType" },
+              {"name": "linkedRecordId"  , "value": "validationOrder"}
+            ]
+          }
+        ]
+      },
+      {
+        "name": "recordType",
+        "children": [
+          {"name": "linkedRecordType", "value": "recordType"}                   ,
+          {"name": "linkedRecordId", "value": "record type to validate against"}
+        ]
+      },
+      {"name": "validateLinks", "value": "true || false"},
+      {"name": "metadataToValidate", "value": "new || existing"}
+    ]
+  },
+  "record": "putRecordHere"
+}
