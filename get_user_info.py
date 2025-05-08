@@ -106,6 +106,7 @@ def start():
     fromNo=root.find('./fromNo').text
     toNo=root.find('./toNo').text
     totalNo=root.find('./totalNo').text
+    print(f"{fromNo=} {toNo=} {totalNo=}")
 
     for rec in root.findall('./data/record/data/user'):
         print(rec.attrib)
