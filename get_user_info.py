@@ -30,6 +30,21 @@ request_counter = 0
 app_token_client = None
 data_logger = None
 
+from atexit import register
+
+# Note that you cannot cancel the MainThread
+def all_done():
+    global Verbose_Flag
+    for thr in threading._enumerate():
+        if Verbose_Flag:
+            print(f"{thr.name=}")
+        if thr.name != 'MainThread':
+            if thr.is_alive():
+                thr.cancel()
+                thr.join()
+
+register(all_done)
+
 
 def read_source_xml(sourceXml):
     return  ET.ElementTree(ET.fromstring(sourceXml))
@@ -117,34 +132,21 @@ def start():
             userFirstname=rec.find('userFirstname').text
             userLastname=rec.find('userLastname').text
             print(f"{user_type}\t{user_id=}\t{login_id=}\t{userFirstname=}\t{userLastname=}")
-    exit(-1)
 
-    dataList = CommonData.read_source_xml(filePath_sourceXml)
-    list_dataRecord = []
-    for data_record in dataList.findall('.//DATA_RECORD'):
-        list_dataRecord.append(data_record)
+    # dataList = CommonData.read_source_xml(filePath_sourceXml)
+    # list_dataRecord = []
+    # for data_record in dataList.findall('.//DATA_RECORD'):
+    #     list_dataRecord.append(data_record)
     
-    print(f'Number of records read: {len(list_dataRecord)}')
+    # print(f'Number of records read: {len(list_dataRecord)}')
     
-#    with Pool(WORKERS) as pool:
-    with ThreadPool(WORKERS) as pool:
-#        test = pool.map(new_record_build, list_dataRecord)
-#            print(test)
-#        pool.map(validate_record, list_dataRecord)
-#        list(tqdm(
-#            pool.imap_unordered(validate_record, list_dataRecord),
-#            total=len(list_dataRecord),
-#            desc="Validating records"
-#        ))
-        list(tqdm(
-            pool.imap_unordered(create_record, list_dataRecord),
-            total=len(list_dataRecord),
-            desc="Created records"
-        ))
-        # pool.map(ServersideData.create_record, list_dataRecord)
-#    global app_token_client
     
     print(f'Tidsåtgång: {time.time() - starttime}')
+
+    # shutdown in an orderly maner by cancelling the timer for the authToken
+    # The all_done() function will get called to kill off all the threads
+    app_token_client.cancel_timer()
+
 
     
 def start_app_token_client():

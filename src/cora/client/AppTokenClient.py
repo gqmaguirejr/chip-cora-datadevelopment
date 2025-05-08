@@ -73,3 +73,7 @@ class  AppTokenClient:
         
     def get_auth_token(self):
         return self.auth_token
+
+    def cancel_timer(self):
+        self.timer.cancel()
+        return True
