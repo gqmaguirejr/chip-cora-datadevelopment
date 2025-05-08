@@ -17,6 +17,8 @@ from tqdm import tqdm
 import xml.etree.ElementTree as ET
 
 import json
+import gzip
+import pprint
 
 #system = 'preview'
 # system = 'local'
@@ -36,7 +38,8 @@ from atexit import register
 
 # Note that you cannot cancel the MainThread
 def all_done():
-    global Verbose_Flag
+    #global Verbose_Flag
+    Verbose_Flag=False
     for thr in threading._enumerate():
         if Verbose_Flag:
             print(f"{thr.name=}")
@@ -71,7 +74,7 @@ def giveup_token(authtoken):
 # response.status_code=404
 # response.text='<!doctype html><html lang="en"><head><title>HTTP Status 404 – Not Found</title><style type="text/css">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 404 – Not Found</h1><hr class="line" /><p><b>Type</b> Status Report</p><p><b>Message</b> Not Found</p><p><b>Description</b> The origin server did not find a current representation for the target resource or is not willing to disclose that one exists.</p><hr class="line" /><h3>Apache Tomcat/11.0.2</h3></body></html>'
 # response.headers={'Date': 'Thu, 08 May 2025 10:26:01 GMT', 'Server': 'Apache/2.4.63 (Unix) mod_qos/11.63', 'Content-Type': 'text/html;charset=utf-8', 'Content-Language': 'en', 'Content-Length': '713', 'Strict-Transport-Security': 'max-age=31536000', 'X-Varnish': '87953399', 'Age': '0', 'Via': '1.1 varnish (Varnish/7.1)', 'Connection': 'keep-alive'}
-response.request.headers={'User-Agent': 'python-requests/2.31.0', 'accept-encoding': 'gzip, deflate, br, zstd', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Type': 'application/vnd.uub.login', 'accept-language': 'en-US,en;q=0.9', 'authToken': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'Content-Length': '0'}
+#response.request.headers={'User-Agent': 'python-requests/2.31.0', 'accept-encoding': 'gzip, deflate, br, zstd', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Type': 'application/vnd.uub.login', 'accept-language': 'en-US,en;q=0.9', 'authToken': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'Content-Length': '0'}
 
 
 
@@ -113,6 +116,111 @@ def get_user():
             print(f"{response.status_code=} {response.text=}")
     return page_response
 
+def get_record_json(recordType, id):
+    global Verbose_Flag
+    global app_token_client
+    
+    page_response=''
+
+    auth_token = app_token_client.get_auth_token()
+    headers = {'Content-Type': 'application/vnd.uub.record+json',
+               'Accept':'application/vnd.uub.record+json',
+               'authToken':auth_token,
+               'accept-encoding': 'gzip, deflate, br, zstd',
+               'accept-language': 'en-US,en;q=0.9'
+               }
+    url = ConstantsData.BASE_URL[system] + f'{recordType}/{id}'
+    if Verbose_Flag:
+        print(f"{url=}")
+
+    response = requests.get(url, headers=headers)
+
+    print(f"{response.status_code=}")
+    if response.status_code == requests.codes.ok:
+        if Verbose_Flag:
+            print(f"{response.text=}")
+            #print(f"{r.headers=}")
+        page_response=json.loads(response.text)
+        #page_response=json.loads(response.text)
+    else:
+        if Verbose_Flag:
+            print(f"{response.status_code=} {response.text=}")
+    return page_response
+
+def get_records_json(recordType):
+    global Verbose_Flag
+    global app_token_client
+    
+    page_response=''
+
+    auth_token = app_token_client.get_auth_token()
+    headers = {'Content-Type': 'application/vnd.uub.recordList+json',
+               'Accept':'application/vnd.uub.recordList+json',
+               'authToken':auth_token,
+               'accept-encoding': 'gzip, deflate, br, zstd',
+               'accept-language': 'en-US,en;q=0.9'
+               }
+    url = ConstantsData.BASE_URL[system] + f'{recordType}'
+    if Verbose_Flag:
+        print(f"{url=}")
+
+    response = requests.get(url, headers=headers)
+
+    print(f"{response.status_code=}")
+    if response.status_code == requests.codes.ok:
+        if Verbose_Flag:
+            print(f"{response.text=}")
+            #print(f"{r.headers=}")
+            page_response=json.loads(response.text)
+        #page_response=json.loads(response.text)
+    else:
+        if Verbose_Flag:
+            print(f"{response.status_code=} {response.text=}")
+    return page_response
+
+
+
+
+# diva-outputSearch
+def searchResult_search(search_id, search_data):
+    global Verbose_Flag
+    global app_token_client
+    global data_logger
+
+    page_response=''
+
+    payload={'searchData': json.dumps(search_data, separators=(',', ':'))}
+    #payload={'searchData': search_data}
+
+    auth_token = app_token_client.get_auth_token()
+    headers = {'Content-Type': 'application/vnd.uub.recordList+json',
+               'Accept':'application/vnd.uub.recordList+json',
+               'authToken':auth_token,
+               'accept-encoding': 'gzip, deflate, br, zstd',
+               'accept-language': 'en-US,en;q=0.9'
+               }
+    url = ConstantsData.BASE_URL[system] + f'searchResult/{search_id}'
+    if Verbose_Flag:
+        print(f"{url=}")
+
+    response = requests.get(url, headers=headers, params=payload)
+    print(f"{response.status_code=}")
+    if response.status_code == requests.codes.ok:
+        if Verbose_Flag:
+            print(f"{response.text=}")
+            print(f"{response.headers=}")
+            print(f"{response.request.headers=}")
+        if response.headers.get('gzip'):
+            print(f"{response.content=}")
+            uncomp=gzip.decompress(response.content)
+            page_response=json.loads(uncomp)
+        else:
+            page_response=json.loads(response.text)
+        #page_response=json.loads(response.text)
+    else:
+        if Verbose_Flag:
+            print(f"{response.status_code=} {response.text=}")
+    return page_response
 
 
 def start():
@@ -169,13 +277,531 @@ def start():
     
     # print(f'Number of records read: {len(list_dataRecord)}')
     
+    # https://pre.diva-portal.org/rest/record/searchResult/diva-outputSearch?searchData=%7B%22name%22%3A%22search%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22recordIdSearchTerm%22%2C%22value%22%3A%22diva-output%3A15009801329005961%22%7D%5D%7D%5D%7D%5D%7D&preventCache=1746701359244
+    search_data={"name": "search",
+                 "children": [{"name": "include",
+                               "children": [{"name": "includePart",
+                                             "children": [{"name": "recordIdSearchTerm", "value": "diva-output: 15009801329005961"}]
+                                             }]
+                               }]
+                 }
+
+
+    rr=get_record_json('diva-output', 'diva-output:15009801329005961')
+    print(f"{rr=}")
+    pprint.pprint(rr, width=120)
+
+    # Returns:
+    # {'record': {'actionLinks': {'delete': {'rel': 'delete',
+    #                                        'requestMethod': 'DELETE',
+    #                                        'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15009801329005961'},
+    #                             'index': {'accept': 'application/vnd.uub.record+json',
+    #                                       'body': {'children': [{'children': [{'name': 'linkedRecordType',
+    #                                                                            'value': 'recordType'},
+    #                                                                           {'name': 'linkedRecordId',
+    #                                                                            'value': 'diva-output'}],
+    #                                                              'name': 'recordType'},
+    #                                                             {'name': 'recordId',
+    #                                                              'value': 'diva-output:15009801329005961'},
+    #                                                             {'name': 'type', 'value': 'index'}],
+    #                                                'name': 'workOrder'},
+    #                                       'contentType': 'application/vnd.uub.record+json',
+    #                                       'rel': 'index',
+    #                                       'requestMethod': 'POST',
+    #                                       'url': 'https://pre.diva-portal.org/rest/record/workOrder/'},
+    #                             'read': {'accept': 'application/vnd.uub.record+json',
+    #                                      'rel': 'read',
+    #                                      'requestMethod': 'GET',
+    #                                      'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15009801329005961'},
+    #                             'update': {'accept': 'application/vnd.uub.record+json',
+    #                                        'contentType': 'application/vnd.uub.record+json',
+    #                                        'rel': 'update',
+    #                                        'requestMethod': 'POST',
+    #                                        'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15009801329005961'}},
+    #             'data': {'children': [{'children': [{'name': 'type', 'value': 'attachment'},
+    #                                                 {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                           'rel': 'read',
+    #                                                                           'requestMethod': 'GET',
+    #                                                                           'url': 'https://pre.diva-portal.org/rest/record/binary/binary:15009821683601401'}},
+    #                                                  'children': [{'name': 'linkedRecordType', 'value': 'binary'},
+    #                                                               {'name': 'linkedRecordId',
+    #                                                                'value': 'binary:15009821683601401'}],
+    #                                                  'name': 'attachmentFile'}],
+    #                                    'name': 'attachment',
+    #                                    'repeatId': '0'},
+    #                                   {'children': [{'name': 'reviewed', 'value': 'true'}], 'name': 'admin'},
+    #                                   {'attributes': {'type': 'isrn'}, 'name': 'identifier', 'value': 'KTH/BKN/R-164-SE'},
+    #                                   {'attributes': {'authority': 'ssif'},
+    #                                    'name': 'classification',
+    #                                    'repeatId': '0',
+    #                                    'value': '20199'},
+    #                                   {'children': [{'children': [{'name': 'year', 'value': '2017'}],
+    #                                                  'name': 'dateIssued'}],
+    #                                    'name': 'originInfo'},
+    #                                   {'attributes': {'type': 'personal'},
+    #                                    'children': [{'children': [{'name': 'roleTerm', 'repeatId': '0', 'value': 'aut'}],
+    #                                                  'name': 'role'},
+    #                                                 {'attributes': {'type': 'given'},
+    #                                                  'name': 'namePart',
+    #                                                  'value': 'Roghayeh'},
+    #                                                 {'attributes': {'type': 'family'},
+    #                                                  'name': 'namePart',
+    #                                                  'value': 'Abbasiverki'}],
+    #                                    'name': 'name',
+    #                                    'repeatId': '0'},
+    #                                   {'attributes': {'lang': 'eng'},
+    #                                    'children': [{'name': 'title',
+    #                                                  'value': 'Initial study on seismic analyses of concrete and '
+    #                                                           'embankment dams in Sweden'}],
+    #                                    'name': 'titleInfo'},
+    #                                   {'attributes': {'type': 'contentType'}, 'name': 'genre', 'value': 'ref'},
+    #                                   {'children': [{'attributes': {'authority': 'iso639-2b', 'type': 'code'},
+    #                                                  'name': 'languageTerm',
+    #                                                  'value': 'eng'}],
+    #                                    'name': 'language',
+    #                                    'repeatId': '0'},
+    #                                   {'attributes': {'type': 'outputType'},
+    #                                    'name': 'genre',
+    #                                    'value': 'publication_report'},
+    #                                   {'children': [{'name': 'visibility', 'value': 'published'},
+    #                                                 {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                           'rel': 'read',
+    #                                                                           'requestMethod': 'GET',
+    #                                                                           'url': 'https://pre.diva-portal.org/rest/record/permissionUnit/kth'}},
+    #                                                  'children': [{'name': 'linkedRecordType', 'value': 'permissionUnit'},
+    #                                                               {'name': 'linkedRecordId', 'value': 'kth'}],
+    #                                                  'name': 'permissionUnit'},
+    #                                                 {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                           'rel': 'read',
+    #                                                                           'requestMethod': 'GET',
+    #                                                                           'url': 'https://pre.diva-portal.org/rest/record/validationType/publication_report'}},
+    #                                                  'children': [{'name': 'linkedRecordType', 'value': 'validationType'},
+    #                                                               {'name': 'linkedRecordId',
+    #                                                                'value': 'publication_report'}],
+    #                                                  'name': 'validationType'},
+    #                                                 {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                           'rel': 'read',
+    #                                                                           'requestMethod': 'GET',
+    #                                                                           'url': 'https://pre.diva-portal.org/rest/record/system/divaData'}},
+    #                                                  'children': [{'name': 'linkedRecordType', 'value': 'system'},
+    #                                                               {'name': 'linkedRecordId', 'value': 'divaData'}],
+    #                                                  'name': 'dataDivider'},
+    #                                                 {'name': 'tsVisibility', 'value': '2025-05-08T08:26:11.613501Z'},
+    #                                                 {'name': 'id', 'value': 'diva-output:15009801329005961'},
+    #                                                 {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                           'rel': 'read',
+    #                                                                           'requestMethod': 'GET',
+    #                                                                           'url': 'https://pre.diva-portal.org/rest/record/recordType/diva-output'}},
+    #                                                  'children': [{'name': 'linkedRecordType', 'value': 'recordType'},
+    #                                                               {'name': 'linkedRecordId', 'value': 'diva-output'}],
+    #                                                  'name': 'type'},
+    #                                                 {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                           'rel': 'read',
+    #                                                                           'requestMethod': 'GET',
+    #                                                                           'url': 'https://pre.diva-portal.org/rest/record/user/161616'}},
+    #                                                  'children': [{'name': 'linkedRecordType', 'value': 'user'},
+    #                                                               {'name': 'linkedRecordId', 'value': '161616'}],
+    #                                                  'name': 'createdBy'},
+    #                                                 {'name': 'tsCreated', 'value': '2025-05-08T08:26:11.619838Z'},
+    #                                                 {'children': [{'name': 'tsUpdated',
+    #                                                                'value': '2025-05-08T08:55:54.418078Z'},
+    #                                                               {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                         'rel': 'read',
+    #                                                                                         'requestMethod': 'GET',
+    #                                                                                         'url': 'https://pre.diva-portal.org/rest/record/user/161616'}},
+    #                                                                'children': [{'name': 'linkedRecordType',
+    #                                                                              'value': 'user'},
+    #                                                                             {'name': 'linkedRecordId',
+    #                                                                              'value': '161616'}],
+    #                                                                'name': 'updatedBy'}],
+    #                                                  'name': 'updated',
+    #                                                  'repeatId': '0'}],
+    #                                    'name': 'recordInfo'}],
+    #                      'name': 'output'}}}
+
+
+
+    recs=get_records_json('diva-output')
+    print(f"{recs=}")
+    pprint.pprint(recs, width=120)
+
+    # Returns:
+    # {'dataList': {'containDataOfType': 'diva-output',
+    # 'data': [{'record': {'actionLinks': {'delete': {'rel': 'delete',
+    #                                                 'requestMethod': 'DELETE',
+    #                                                 'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15009801329005961'},
+    #                                      'index': {'accept': 'application/vnd.uub.record+json',
+    #                                                'body': {'children': [{'children': [{'name': 'linkedRecordType',
+    #                                                                                     'value': 'recordType'},
+    #                                                                                    {'name': 'linkedRecordId',
+    #                                                                                     'value': 'diva-output'}],
+    #                                                                       'name': 'recordType'},
+    #                                                                      {'name': 'recordId',
+    #                                                                       'value': 'diva-output:15009801329005961'},
+    #                                                                      {'name': 'type', 'value': 'index'}],
+    #                                                         'name': 'workOrder'},
+    #                                                'contentType': 'application/vnd.uub.record+json',
+    #                                                'rel': 'index',
+    #                                                'requestMethod': 'POST',
+    #                                                'url': 'https://pre.diva-portal.org/rest/record/workOrder/'},
+    #                                      'read': {'accept': 'application/vnd.uub.record+json',
+    #                                               'rel': 'read',
+    #                                               'requestMethod': 'GET',
+    #                                               'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15009801329005961'},
+    #                                      'update': {'accept': 'application/vnd.uub.record+json',
+    #                                                 'contentType': 'application/vnd.uub.record+json',
+    #                                                 'rel': 'update',
+    #                                                 'requestMethod': 'POST',
+    #                                                 'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15009801329005961'}},
+    #                      'data': {'children': [{'children': [{'name': 'type', 'value': 'attachment'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/binary/binary:15009821683601401'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'binary'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'binary:15009821683601401'}],
+    #                                                           'name': 'attachmentFile'}],
+    #                                             'name': 'attachment',
+    #                                             'repeatId': '0'},
+    #                                            {'children': [{'name': 'reviewed', 'value': 'true'}],
+    #                                             'name': 'admin'},
+    #                                            {'attributes': {'type': 'isrn'},
+    #                                             'name': 'identifier',
+    #                                             'value': 'KTH/BKN/R-164-SE'},
+    #                                            {'attributes': {'authority': 'ssif'},
+    #                                             'name': 'classification',
+    #                                             'repeatId': '0',
+    #                                             'value': '20199'},
+    #                                            {'children': [{'children': [{'name': 'year', 'value': '2017'}],
+    #                                                           'name': 'dateIssued'}],
+    #                                             'name': 'originInfo'},
+    #                                            {'attributes': {'type': 'personal'},
+    #                                             'children': [{'children': [{'name': 'roleTerm',
+    #                                                                         'repeatId': '0',
+    #                                                                         'value': 'aut'}],
+    #                                                           'name': 'role'},
+    #                                                          {'attributes': {'type': 'given'},
+    #                                                           'name': 'namePart',
+    #                                                           'value': 'Roghayeh'},
+    #                                                          {'attributes': {'type': 'family'},
+    #                                                           'name': 'namePart',
+    #                                                           'value': 'Abbasiverki'}],
+    #                                             'name': 'name',
+    #                                             'repeatId': '0'},
+    #                                            {'attributes': {'lang': 'eng'},
+    #                                             'children': [{'name': 'title',
+    #                                                           'value': 'Initial study on seismic analyses of '
+    #                                                                    'concrete and embankment dams in '
+    #                                                                    'Sweden'}],
+    #                                             'name': 'titleInfo'},
+    #                                            {'attributes': {'type': 'contentType'},
+    #                                             'name': 'genre',
+    #                                             'value': 'ref'},
+    #                                            {'children': [{'attributes': {'authority': 'iso639-2b',
+    #                                                                          'type': 'code'},
+    #                                                           'name': 'languageTerm',
+    #                                                           'value': 'eng'}],
+    #                                             'name': 'language',
+    #                                             'repeatId': '0'},
+    #                                            {'attributes': {'type': 'outputType'},
+    #                                             'name': 'genre',
+    #                                             'value': 'publication_report'},
+    #                                            {'children': [{'name': 'visibility', 'value': 'published'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/permissionUnit/kth'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'permissionUnit'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'kth'}],
+    #                                                           'name': 'permissionUnit'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/validationType/publication_report'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'validationType'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'publication_report'}],
+    #                                                           'name': 'validationType'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/system/divaData'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'system'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'divaData'}],
+    #                                                           'name': 'dataDivider'},
+    #                                                          {'name': 'tsVisibility',
+    #                                                           'value': '2025-05-08T08:26:11.613501Z'},
+    #                                                          {'name': 'id',
+    #                                                           'value': 'diva-output:15009801329005961'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/recordType/diva-output'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'recordType'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'diva-output'}],
+    #                                                           'name': 'type'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/user/161616'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'user'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': '161616'}],
+    #                                                           'name': 'createdBy'},
+    #                                                          {'name': 'tsCreated',
+    #                                                           'value': '2025-05-08T08:26:11.619838Z'},
+    #                                                          {'children': [{'name': 'tsUpdated',
+    #                                                                         'value': '2025-05-08T08:55:54.418078Z'},
+    #                                                                        {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                                  'rel': 'read',
+    #                                                                                                  'requestMethod': 'GET',
+    #                                                                                                  'url': 'https://pre.diva-portal.org/rest/record/user/161616'}},
+    #                                                                         'children': [{'name': 'linkedRecordType',
+    #                                                                                       'value': 'user'},
+    #                                                                                      {'name': 'linkedRecordId',
+    #                                                                                       'value': '161616'}],
+    #                                                                         'name': 'updatedBy'}],
+    #                                                           'name': 'updated',
+    #                                                           'repeatId': '0'}],
+    #                                             'name': 'recordInfo'}],
+    #                               'name': 'output'}}},
+    #          {'record': {'actionLinks': {'delete': {'rel': 'delete',
+    #                                                 'requestMethod': 'DELETE',
+    #                                                 'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15008895675602116'},
+    #                                      'index': {'accept': 'application/vnd.uub.record+json',
+    #                                                'body': {'children': [{'children': [{'name': 'linkedRecordType',
+    #                                                                                     'value': 'recordType'},
+    #                                                                                    {'name': 'linkedRecordId',
+    #                                                                                     'value': 'diva-output'}],
+    #                                                                       'name': 'recordType'},
+    #                                                                      {'name': 'recordId',
+    #                                                                       'value': 'diva-output:15008895675602116'},
+    #                                                                      {'name': 'type', 'value': 'index'}],
+    #                                                         'name': 'workOrder'},
+    #                                                'contentType': 'application/vnd.uub.record+json',
+    #                                                'rel': 'index',
+    #                                                'requestMethod': 'POST',
+    #                                                'url': 'https://pre.diva-portal.org/rest/record/workOrder/'},
+    #                                      'read': {'accept': 'application/vnd.uub.record+json',
+    #                                               'rel': 'read',
+    #                                               'requestMethod': 'GET',
+    #                                               'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15008895675602116'},
+    #                                      'update': {'accept': 'application/vnd.uub.record+json',
+    #                                                 'contentType': 'application/vnd.uub.record+json',
+    #                                                 'rel': 'update',
+    #                                                 'requestMethod': 'POST',
+    #                                                 'url': 'https://pre.diva-portal.org/rest/record/diva-output/diva-output:15008895675602116'}},
+    #                      'data': {'children': [{'children': [{'name': 'type', 'value': 'summary'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/binary/binary:15010340076836716'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'binary'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'binary:15010340076836716'}],
+    #                                                           'name': 'attachmentFile'}],
+    #                                             'name': 'attachment',
+    #                                             'repeatId': '0'},
+    #                                            {'children': [{'name': 'reviewed', 'value': 'true'}],
+    #                                             'name': 'admin'},
+    #                                            {'attributes': {'type': 'scopus'},
+    #                                             'name': 'identifier',
+    #                                             'value': '2-s2.0-85217066856'},
+    #                                            {'attributes': {'type': 'pmid'},
+    #                                             'name': 'identifier',
+    #                                             'value': '39921387'},
+    #                                            {'attributes': {'type': 'doi'},
+    #                                             'name': 'identifier',
+    #                                             'value': '10.1002/gcc.70029'},
+    #                                            {'attributes': {'authority': 'ssif'},
+    #                                             'name': 'classification',
+    #                                             'repeatId': '0',
+    #                                             'value': '30202'},
+    #                                            {'children': [{'children': [{'name': 'year', 'value': '2025'}],
+    #                                                           'name': 'dateIssued'}],
+    #                                             'name': 'originInfo'},
+    #                                            {'attributes': {'lang': 'eng'},
+    #                                             'children': [{'name': 'topic',
+    #                                                           'value': 'azacitidine, deletion 5q, high-risk '
+    #                                                                    'myelodysplastic syndrome, '
+    #                                                                    'lenalidomide, outcome, TP53'}],
+    #                                             'name': 'subject',
+    #                                             'repeatId': '0'},
+    #                                            {'attributes': {'lang': 'eng'},
+    #                                             'name': 'abstract',
+    #                                             'repeatId': '0',
+    #                                             'value': 'In myelodysplastic syndromes (MDS), cytogenetic '
+    #                                                      'characteristics of the malignant bone marrow cells '
+    #                                                      'influence the clinical course. The aim of this '
+    #                                                      'study was to evaluate whether cytogenetics is '
+    #                                                      'useful to predict outcome and response in patients '
+    #                                                      'with del(5q) under azacitidine (AZA) +/- '
+    #                                                      'lenalidomide (LEN) therapy. We therefore performed '
+    #                                                      'comprehensive cytogenetic analyses in MDS patients '
+    #                                                      'with del(5q) treated within the randomized phase '
+    #                                                      'II trial NMDSG10B. Seventy-two patients were '
+    #                                                      'enrolled in the study and 46 patients (64%) had '
+    #                                                      'sufficient cytogenetics at inclusion and response '
+    #                                                      'evaluation. Karyotyping was significantly more '
+    #                                                      'sensitive during follow-up to detect del(5q) '
+    #                                                      'compared to FISH, 34 patients (97%) versus 27 '
+    #                                                      'patients (77%) (p = 0.027). The overall response '
+    #                                                      'rate (ORR) did not differ between the 11 patients '
+    #                                                      'with < 3 aberrations (median 1 aberration) and the '
+    #                                                      '59 patients with >= 3 aberrations (median 7 '
+    #                                                      'aberrations, range 3-16), while >= 3 aberrations '
+    #                                                      'were associated with shorter overall survival '
+    #                                                      '(OS), 9.9 months versus 25.2 months (p = 0.004). '
+    #                                                      'OS was significantly shorter in patients with '
+    #                                                      'unbalanced translocation of 5q than patients with '
+    #                                                      'del (5)(q14q34), 8.4 months versus 21.1 months (p '
+    #                                                      '= 0.004). Both complex karyotype and multi-hit '
+    #                                                      'TP53 alterations were more frequent in patients '
+    #                                                      'with unbalanced translocations of 5q versus del '
+    #                                                      '(5)(q14q34), 98% and 88% versus 67% and 47% (each '
+    #                                                      'p = < 0.001). Most patients with cytogenetic '
+    #                                                      'progression had multi-hit TP53 alterations at '
+    #                                                      'inclusion. Cytogenetic progression occurred at a '
+    #                                                      'similar frequency in the AZA arm and in the AZA + '
+    #                                                      'LEN arm. In summary, this study in homogenously '
+    #                                                      'treated MDS patients with different abnormalities '
+    #                                                      'of 5q demonstrates the influence of cytogenetics '
+    #                                                      'on treatment results. Trial Registration: EudraCT '
+    #                                                      'number: 2011-001639-21; identifier: NCT01556477.'},
+    #                                            {'attributes': {'type': 'personal'},
+    #                                             'children': [{'children': [{'attributes': {'type': 'corporate'},
+    #                                                                         'children': [{'name': 'namePart',
+    #                                                                                       'value': 'Örebro '
+    #                                                                                                'Univ, '
+    #                                                                                                'Fac Med '
+    #                                                                                                '& Hlth, '
+    #                                                                                                'Dept '
+    #                                                                                                'Med, Div '
+    #                                                                                                'Hematol, '
+    #                                                                                                'Örebro, '
+    #                                                                                                'Sweden..'}],
+    #                                                                         'name': 'name'}],
+    #                                                           'name': 'affiliation',
+    #                                                           'repeatId': '0'},
+    #                                                          {'attributes': {'type': 'given'},
+    #                                                           'name': 'namePart',
+    #                                                           'value': 'Bengt'},
+    #                                                          {'attributes': {'type': 'family'},
+    #                                                           'name': 'namePart',
+    #                                                           'value': 'Rasmussen'}],
+    #                                             'name': 'name',
+    #                                             'repeatId': '0'},
+    #                                            {'attributes': {'lang': 'eng'},
+    #                                             'children': [{'name': 'title',
+    #                                                           'value': 'Influence of Cytogenetics on the '
+    #                                                                    'Outcome of Patients With High-Risk '
+    #                                                                    'Myelodysplastic Syndrome Including '
+    #                                                                    'Deletion 5q Treated With Azacitidine '
+    #                                                                    'With or Without Lenalidomide'}],
+    #                                             'name': 'titleInfo'},
+    #                                            {'attributes': {'type': 'contentType'},
+    #                                             'name': 'genre',
+    #                                             'value': 'vet'},
+    #                                            {'children': [{'attributes': {'authority': 'iso639-2b',
+    #                                                                          'type': 'code'},
+    #                                                           'name': 'languageTerm',
+    #                                                           'value': 'eng'}],
+    #                                             'name': 'language',
+    #                                             'repeatId': '0'},
+    #                                            {'attributes': {'type': 'outputType'},
+    #                                             'name': 'genre',
+    #                                             'value': 'publication_journal-article'},
+    #                                            {'children': [{'name': 'visibility', 'value': 'published'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/permissionUnit/uu'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'permissionUnit'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'uu'}],
+    #                                                           'name': 'permissionUnit'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/validationType/publication_journal-article'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'validationType'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'publication_journal-article'}],
+    #                                                           'name': 'validationType'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/system/divaData'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'system'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'divaData'}],
+    #                                                           'name': 'dataDivider'},
+    #                                                          {'name': 'tsVisibility',
+    #                                                           'value': '2025-05-08T08:11:05.960834Z'},
+    #                                                          {'name': 'id',
+    #                                                           'value': 'diva-output:15008895675602116'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/recordType/diva-output'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'recordType'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': 'diva-output'}],
+    #                                                           'name': 'type'},
+    #                                                          {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                    'rel': 'read',
+    #                                                                                    'requestMethod': 'GET',
+    #                                                                                    'url': 'https://pre.diva-portal.org/rest/record/user/161616'}},
+    #                                                           'children': [{'name': 'linkedRecordType',
+    #                                                                         'value': 'user'},
+    #                                                                        {'name': 'linkedRecordId',
+    #                                                                         'value': '161616'}],
+    #                                                           'name': 'createdBy'},
+    #                                                          {'name': 'tsCreated',
+    #                                                           'value': '2025-05-08T08:11:05.966470Z'},
+    #                                                          {'children': [{'name': 'tsUpdated',
+    #                                                                         'value': '2025-05-08T08:56:07.781735Z'},
+    #                                                                        {'actionLinks': {'read': {'accept': 'application/vnd.uub.record+json',
+    #                                                                                                  'rel': 'read',
+    #                                                                                                  'requestMethod': 'GET',
+    #                                                                                                  'url': 'https://pre.diva-portal.org/rest/record/user/161616'}},
+    #                                                                         'children': [{'name': 'linkedRecordType',
+    #                                                                                       'value': 'user'},
+    #                                                                                      {'name': 'linkedRecordId',
+    #                                                                                       'value': '161616'}],
+    #                                                                         'name': 'updatedBy'}],
+    #                                                           'name': 'updated',
+    #                                                           'repeatId': '0'}],
+    #                                             'name': 'recordInfo'}],
+    #                               'name': 'output'}}}],
+    # 'fromNo': '0',
+    # 'toNo': '2',
+    # 'totalNo': '2'}}
+
+    search_result=searchResult_search('diva-outputSearch', search_data)
+    print(f"\n{search_result=}")
     
     print(f'Tidsåtgång: {time.time() - starttime}')
 
     # shutdown in an orderly maner by cancelling the timer for the authToken
     # The all_done() function will get called to kill off all the threads
     app_token_client.cancel_timer()
-    stat=giveup_token(app_token_client.get_auth_token())
+    #stat=giveup_token(app_token_client.get_auth_token())
 
 
     
