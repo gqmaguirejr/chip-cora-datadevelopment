@@ -16,6 +16,8 @@ from cora.client.AppTokenClient import AppTokenClient
 from tqdm import tqdm
 import xml.etree.ElementTree as ET
 
+import json
+
 #system = 'preview'
 # system = 'local'
 system = 'pre'
@@ -44,6 +46,33 @@ def all_done():
                 thr.join()
 
 register(all_done)
+
+
+def giveup_token(authtoken):
+    global Verbose_Flag
+    global app_token_client
+    #DELETE {baseUrl}/authToken/{tokenId}
+    url=f"https://pre.diva-portal.org/login/rest/authToken/{authtoken}"
+    if Verbose_Flag:
+        print(f"{url=}")
+    headers = {'Content-Type':'application/vnd.uub.login',
+               'Accept': '*/*',
+               'accept-encoding': 'gzip, deflate, br, zstd',
+               'accept-language': 'en-US,en;q=0.9',
+               'authToken': authtoken}
+
+    response = requests.delete(url, headers=headers)
+    print(f"{response.status_code=}\n{response.text=}\n{response.headers=}\n{response.request.headers=}")
+    app_token_client=None
+    return response
+
+# The above delete request fails with:
+# url='https://pre.diva-portal.org/login/rest/authToken/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'
+# response.status_code=404
+# response.text='<!doctype html><html lang="en"><head><title>HTTP Status 404 – Not Found</title><style type="text/css">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 404 – Not Found</h1><hr class="line" /><p><b>Type</b> Status Report</p><p><b>Message</b> Not Found</p><p><b>Description</b> The origin server did not find a current representation for the target resource or is not willing to disclose that one exists.</p><hr class="line" /><h3>Apache Tomcat/11.0.2</h3></body></html>'
+# response.headers={'Date': 'Thu, 08 May 2025 10:26:01 GMT', 'Server': 'Apache/2.4.63 (Unix) mod_qos/11.63', 'Content-Type': 'text/html;charset=utf-8', 'Content-Language': 'en', 'Content-Length': '713', 'Strict-Transport-Security': 'max-age=31536000', 'X-Varnish': '87953399', 'Age': '0', 'Via': '1.1 varnish (Varnish/7.1)', 'Connection': 'keep-alive'}
+response.request.headers={'User-Agent': 'python-requests/2.31.0', 'accept-encoding': 'gzip, deflate, br, zstd', 'Accept': '*/*', 'Connection': 'keep-alive', 'Content-Type': 'application/vnd.uub.login', 'accept-language': 'en-US,en;q=0.9', 'authToken': 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx', 'Content-Length': '0'}
+
 
 
 def read_source_xml(sourceXml):
@@ -146,6 +175,7 @@ def start():
     # shutdown in an orderly maner by cancelling the timer for the authToken
     # The all_done() function will get called to kill off all the threads
     app_token_client.cancel_timer()
+    stat=giveup_token(app_token_client.get_auth_token())
 
 
     
