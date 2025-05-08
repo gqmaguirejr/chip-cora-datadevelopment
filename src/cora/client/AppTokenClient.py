@@ -2,8 +2,11 @@ from cora.client.LoginError import LoginError
 
 
 class  AppTokenClient:
-    LOGIN_HEADERS = {'Content-Type':'application/vnd.uub.login',
+    old_LOGIN_HEADERS = {'Content-Type':'application/vnd.uub.login',
                       'Accept':'application/vnd.uub.authentication+json'}
+    LOGIN_HEADERS = {'Content-Type':'application/vnd.cora.login',
+                     'Accept':'application/vnd.cora.authentication+json'}
+
     LOGIN_RENEW_BEFORE_EXPIRES_TIME = 20
     CREATE = 201
     OK = 200
@@ -21,6 +24,7 @@ class  AppTokenClient:
 
     def try_to_login(self, login_spec):
         response = self.login_using_spec(login_spec)
+        #print(f"{response.text=}\n{response.headers}\n{response.request.headers}")
         self._handle_login_response(response)
 
     def _handle_login_response(self, response):
@@ -31,7 +35,9 @@ class  AppTokenClient:
         
     def login_using_spec(self, login_spec):
         combined = self.create_combined_login_id_app_token(login_spec)
+        #print(f"{combined=}")
         login_url = login_spec["login_url"]
+        #print(f"{login_url=}")
         return self.requests.post(login_url, data=combined, headers=AppTokenClient.LOGIN_HEADERS)
 
     def create_combined_login_id_app_token(self, login_spec):
