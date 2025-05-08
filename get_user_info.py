@@ -1,4 +1,4 @@
-
+#!/usr/bin/python3
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 import os
@@ -16,8 +16,9 @@ from cora.client.AppTokenClient import AppTokenClient
 from tqdm import tqdm
 import xml.etree.ElementTree as ET
 
-system = 'preview'
+#system = 'preview'
 # system = 'local'
+system = 'pre'
 recordType = 'diva-journal'
 nameInData = 'journal'
 WORKERS = 8
@@ -30,8 +31,51 @@ app_token_client = None
 data_logger = None
 
 
+def read_source_xml(sourceXml):
+    return  ET.ElementTree(ET.fromstring(sourceXml))
+
+
+
+def get_user():
+
+    global Verbose_Flag
+    global app_token_client
+    global data_logger
+    
+    page_response=''
+
+    auth_token = app_token_client.get_auth_token()
+    headers = {'Content-Type': 'application/vnd.uub.recordList+xml',
+               'Accept':'*/*',
+               'authToken':auth_token,
+               'accept-encoding': 'gzip, deflate, br, zstd',
+               'accept-language': 'en-US,en;q=0.9'
+               }
+    url = ConstantsData.BASE_URL[system] + 'user'
+    if Verbose_Flag:
+        print(f"{url=}")
+
+    response = requests.get(url, headers=headers)
+
+    print(f"{response.status_code=}")
+    if response.status_code == requests.codes.ok:
+        if Verbose_Flag:
+            print(f"{response.text=}")
+            #print(f"{r.headers=}")
+        page_response=response.text
+        #page_response=json.loads(response.text)
+    else:
+        if Verbose_Flag:
+            print(f"{response.status_code=} {response.text=}")
+    return page_response
+
+
+
 def start():
     global data_logger
+    global Verbose_Flag
+    Verbose_Flag=True
+
 #    login_logger = RunRotatingLogger('login', 'logs/apptokenlog.txt').get()
 #    login_logger.info(f"_handle_login_response:{response}")
     
@@ -42,6 +86,38 @@ def start():
     starttime = time.time()
     start_app_token_client()
     
+    # for testing by GQMJr
+    print("made it to start()")
+    auth_token = app_token_client.get_auth_token()
+    print(f"{auth_token}")
+    Verbose_Flag=False
+    user_info_xml=get_user()
+    print(f"{len(user_info_xml)=}")
+    tree=read_source_xml(user_info_xml)
+    root = tree.getroot()
+    print(f"top level tag: {root.tag} {root=}")
+    #for child in root:
+    #    print(child.tag, child.attrib)
+    top_level_view=[elem.tag for elem in root.iter()]
+    if Verbose_Flag:
+        print(f"{top_level_view=}")
+
+    Verbose_Flag=True
+    fromNo=root.find('./fromNo').text
+    toNo=root.find('./toNo').text
+    totalNo=root.find('./totalNo').text
+
+    for rec in root.findall('./data/record/data/user'):
+        print(rec.attrib)
+        if rec.attrib and rec.attrib['type']:
+            user_type=rec.attrib['type']
+            user_id=rec.find('recordInfo/id').text
+            login_id=rec.find('loginId').text
+            userFirstname=rec.find('userFirstname').text
+            userLastname=rec.find('userLastname').text
+            print(f"{user_type}\t{user_id=}\t{login_id=}\t{userFirstname=}\t{userLastname=}")
+    exit(-1)
+
     dataList = CommonData.read_source_xml(filePath_sourceXml)
     list_dataRecord = []
     for data_record in dataList.findall('.//DATA_RECORD'):
