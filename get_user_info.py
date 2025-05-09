@@ -1065,9 +1065,103 @@ def start():
                                              "children": [{"name": "recordIdSearchTerm",
                                                            "value": "diva-output:15009801329005961"}]}]}]}
 
-    search_result=searchResult_search('diva-outputSearch', search_data)
-    print(f"\n{search_result=}")
-    
+    Verbose_Flag=True
+    recs=searchResult_search('diva-outputSearch', search_data)
+    if Verbose_Flag:
+        pprint.pprint(recs)
+    if recs:
+        if not recs.get('dataList'):
+            print('no dataList')
+        else:
+            totalNo_as_str=recs['dataList']['totalNo']
+            number_of_records=int(recs['dataList']['totalNo'])
+            print(f"{number_of_records} records found")
+            if Verbose_Flag:
+                pprint.pprint(recs, width=120)
+            if number_of_records > 0:
+                data_list_records=recs['dataList']['data']
+                for idx, dlr in enumerate(data_list_records):
+                    record_data=dlr['record']['data']
+                    record_data_children=record_data['children']
+                    print(f"record {idx=}")
+                    for drlc in record_data_children:
+                        if Verbose_Flag:
+                            print('printing drlc')
+                            if drlc['name'] not in ['titleInfo', 'attachment',  'admin', 'identifier', 'name', 'genre', 'language']:
+                                pprint.pprint(drlc, width=120)
+                        if drlc['name'] == 'recordInfo':
+                            print('printing recordInfo')
+                            for gc in drlc['children']:
+                                if gc.get('name') in ['permissionUnit', 'validationType', 'dataDivider', 'type', 'createdBy', 'createdBy']:
+                                    print(f"\t{gc['name']}")
+                                    for ggc in gc['children']:
+                                        print(f"\t\t{ggc['name']}: {ggc['value']}")
+                                elif gc.get('name') in ['updated']:
+                                    for ggc in gc['children']:
+                                        if ggc['name'] == 'updatedBy':
+                                            print(f"\t{ggc['name']}")
+                                            for gggc in ggc['children']:
+                                                print(f"\t\t{gggc['name']}: {gggc['value']}")
+                                else:
+                                    if gc.get('value'):
+                                        print(f"\t{gc['name']}: {gc['value']}")
+                                    else:
+                                        print(f"\t{gc['name']}: !!!")
+                        elif drlc['name'] == 'textPart':
+                            print(f"language code: {drlc['attributes']['lang']} type: {drlc['attributes']['type']}")
+                            for gc in drlc['children']:
+                                if gc['name'] == 'text':
+                                    print(f"text value: {gc['value']}")
+                        elif drlc['name'] == 'attachment':
+                            for gc in drlc['children']:
+                                if gc['name'] == 'type':
+                                    print(f"{drlc['name']}: type: {gc['value']}")
+                                elif gc['name'] == 'attachmentFile':
+                                    for ggc in gc['children']:
+                                        print(f"\t{gc['name']}: {ggc['name']}: {ggc['value']}")
+                        elif drlc['name'] == 'name':
+                            if drlc.get('attributes'):
+                                type_of_name=drlc['attributes']['type']
+                                print(f"{type_of_name=}")
+                                for gc in drlc['children']:
+                                    if gc['name'] == 'role':
+                                        for ggc in gc['children']:
+                                            print(f"\t{ggc['name']}: {ggc['value']}")
+                                    elif gc['name'] == 'namePart':
+                                        print(f"\t{gc['attributes']['type']}: {gc['value']}")
+                                    else:
+                                        print(f"unknow case: {gc}")
+                        elif drlc['name'] == 'identifier':
+                            print(f"{drlc['name']}: {drlc['attributes']['type']}: {drlc['value']}")
+                        elif drlc['name'] == 'classification':
+                            print(f"{drlc['name']}: authority {drlc['attributes']['authority']}: {drlc['value']}")
+                        elif drlc['name'] == 'originInfo':
+                            for gc in drlc['children']:
+                                if gc['name'] == 'dateIssued':
+                                    for gcc in gc['children']:
+                                        print(f"dateIssued: {gcc['name']} {gcc['value']}")
+                        elif drlc['name'] == 'languageTerm':
+                            print(f"language code: {drlc['value']} attributes {drlc['attributes']}")
+                        elif drlc['name'] == 'titleInfo':
+                            for gc in drlc['children']:
+                                if gc['name'] == 'title':
+                                    print(f"title [{drlc['attributes']['lang']}]: {gc['value']}")
+                        elif drlc['name'] == 'language':
+                            for gc in drlc['children']:
+                                print(f"{gc['name']} language code: {gc['value']}, attributes {gc['attributes']['type']} {gc['attributes']['authority']}")
+                        elif drlc['name'] == 'admin':
+                            for gc in drlc['children']:
+                                print(f"drlc['name']: {gc['name']}: {gc['value']}")
+                        elif drlc['name'] == 'genre':
+                            print(f"genre: {drlc['value']} type: {drlc['attributes']['type']}")
+
+                        else:
+                            print(f"unknown case {drlc=}")
+
+
+
+
+    Verbose_Flag=False    
     print(f'Tidsåtgång: {time.time() - starttime}')
 
     # shutdown in an orderly maner by cancelling the timer for the authToken
