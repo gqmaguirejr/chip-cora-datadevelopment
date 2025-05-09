@@ -134,8 +134,8 @@ def get_record_json(recordType, id):
         print(f"{url=}")
 
     response = requests.get(url, headers=headers)
-
-    print(f"{response.status_code=}")
+    if Verbose_Flag:
+        print(f"{response.status_code=}")
     if response.status_code == requests.codes.ok:
         if Verbose_Flag:
             print(f"{response.text=}")
@@ -151,7 +151,7 @@ def get_records_json(recordType):
     global Verbose_Flag
     global app_token_client
     
-    page_response=''
+    page_response=[]
 
     auth_token = app_token_client.get_auth_token()
     headers = {'Content-Type': 'application/vnd.cora.recordList+json',
@@ -165,18 +165,20 @@ def get_records_json(recordType):
         print(f"{url=}")
 
     response = requests.get(url, headers=headers)
-
-    print(f"{response.status_code=}")
+    if Verbose_Flag:
+        print(f"{response.status_code=}")
     if response.status_code == requests.codes.ok:
         if Verbose_Flag:
             print(f"{response.text=}")
             #print(f"{r.headers=}")
-            page_response=json.loads(response.text)
+        page_response=json.loads(response.text)
         #page_response=json.loads(response.text)
     else:
         if Verbose_Flag:
             print(f"{response.status_code=} {response.text=}")
     return page_response
+
+
 
 def searchResult_search(search_id, search_data):
     global Verbose_Flag
@@ -274,16 +276,6 @@ def start():
     
     # print(f'Number of records read: {len(list_dataRecord)}')
     
-    # https://pre.diva-portal.org/rest/record/searchResult/diva-outputSearch?searchData=%7B%22name%22%3A%22search%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22recordIdSearchTerm%22%2C%22value%22%3A%22diva-output%3A15009801329005961%22%7D%5D%7D%5D%7D%5D%7D&preventCache=1746701359244
-    search_data={"name": "search",
-                 "children": [{"name": "include",
-                               "children": [{"name": "includePart",
-                                             "children": [{"name": "recordIdSearchTerm", "value": "diva-output: 15009801329005961"}]
-                                             }]
-                               }]
-                 }
-
-
     rr=get_record_json('diva-output', 'diva-output:15009801329005961')
     print(f"{rr=}")
     pprint.pprint(rr, width=120)
@@ -918,6 +910,160 @@ def start():
     recs=get_records_json('diva-person')
     print(f"diva-peron {recs=}")
     pprint.pprint(recs, width=120)
+
+    permanent_record_types=['diva-output', 'diva-publisher', 'diva-journal',
+                            'diva-funder', 'diva-publisher', 'diva-person', 'diva-series', 'diva-subject',
+                            'diva-course', 'diva-project', 'diva-programme', 'diva-partOfOrganisation',
+                            'diva-topOrganisation', 'diva-localGenericMarkup']
+
+    Verbose_Flag=False
+    for ty in permanent_record_types:
+        print(f'exploring {ty}')
+        recs=get_records_json(ty)
+        if recs:
+            if not recs.get('dataList'):
+                print('no dataList')
+                continue
+            totalNo_as_str=recs['dataList']['totalNo']
+            number_of_records=int(recs['dataList']['totalNo'])
+            print(f"{number_of_records} records found")
+            #print(f"{ty} {recs=}")
+            if ty not in ['diva-output', 'diva-funder']: # don't pprint these types of records
+                pprint.pprint(recs, width=120)
+            if number_of_records > 0:
+                data_list_records=recs['dataList']['data']
+                for dlr in data_list_records:
+                    record_data=dlr['record']['data']
+                    record_data_children=record_data['children']
+                    for drlc in record_data_children:
+                        if drlc['name'] == 'authority':
+                            print(f"{drlc['attributes']=} {drlc['children']=} {drlc['name']=}")
+                            grand_cildren=drlc['children']
+                            for gc in grand_cildren:
+                                if gc['name'] == 'name':
+                                    print(f"{gc['attributes']['type']=}")
+                                    if gc['children']:
+                                        for c in gc['children']:
+                                            print(f"{c['name']=} {c['value']=}")
+                        elif drlc['name'] == 'recordInfo':
+                            grand_cildren=drlc['children']
+                            for gc in grand_cildren:
+                                if gc['name'] == 'id':
+                                    print(f"id is {gc['value']}")
+                        elif drlc['name'] in ['attachment', 'admin', 'identifier', 'identifier', 'identifier', 'classification', 'originInfo', 'subject', 'abstract', 'name', 'titleInfo', 'genre', 'language', 'genre' ]:
+                            continue # simply ignore these cases
+                        else:
+                            print(f"unknown case: {drlc['name']}")
+   
+    #/rest/record/searchResult/publicTextSearch?searchData=%7B%22name%22%3A%22textSearch%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22translationSearchTerm%22%2C%22value%22%3A%22kth%22%7D%5D%7D%5D%7D%5D%7D&preventCache=1746762291840
+
+    Verbose_Flag=False
+    print('\npublicTextSeaqrch given a text value')
+    #search_data={"name":"textSearch","children":[{"name":"include","children":[{"name":"includePart","children":[{"name":"translationSearchTerm","value":"kth"}]}]}]}
+    search_data={"name":"textSearch",
+                 "children":[{"name":"include",
+                              "children":[{"name":"includePart",
+                                           "children":[{"name":"translationSearchTerm","value":"kth"}]}]}]}
+    recs=searchResult_search('publicTextSearch', search_data)
+    #print(f'{recs=}')
+    if Verbose_Flag:
+        pprint.pprint(recs)
+    if recs:
+        if not recs.get('dataList'):
+            print('no dataList')
+        else:
+            totalNo_as_str=recs['dataList']['totalNo']
+            number_of_records=int(recs['dataList']['totalNo'])
+            print(f"{number_of_records} records found")
+            if Verbose_Flag:
+                pprint.pprint(recs, width=120)
+            if number_of_records > 0:
+                data_list_records=recs['dataList']['data']
+                for idx, dlr in enumerate(data_list_records):
+                    record_data=dlr['record']['data']
+                    record_data_children=record_data['children']
+                    print(f"record {idx=}")
+                    for drlc in record_data_children:
+                        if Verbose_Flag:
+                            print('printing drlc')
+                            if Verbose_Flag:
+                                pprint.pprint(drlc, width=120)
+                        if drlc['name'] == 'recordInfo':
+                            print('printing recordInfo')
+                            for gc in drlc['children']:
+                                if gc['name'] == 'id':
+                                    print(f"id: {gc['value']}")
+                        elif drlc['name'] == 'textPart':
+                            print(f"language code: {drlc['attributes']['lang']} type: {drlc['attributes']['type']}")
+                            for gc in drlc['children']:
+                                if gc['name'] == 'text':
+                                    print(f"text value: {gc['value']}")
+
+                # if drlc['name'] == 'recordInfo':
+                #     grand_cildren=drlc['children']
+                #     for gc in grand_cildren:
+                #                 if gc['name'] == 'id':
+                #                     print(f"id is {gc['value']}")
+                #         elif drlc['name'] in ['attachment', 'admin', 'identifier', 'identifier', 'identifier', 'classification', 'originInfo', 'subject', 'abstract', 'name', 'titleInfo', 'genre', 'language', 'genre' ]:
+                #             continue # simply ignore these cases
+                #         else:
+                #             print(f"unknown case: {drlc['name']}")
+
+
+    # /rest/record/searchResult/publicTextSearch?searchData=%7B%22name%22%3A%22textSearch%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22recordIdSearchTerm%22%2C%22value%22%3A%22kthTestDiVALoginUnitText%22%7D%5D%7D%5D%7D%5D%7D&preventCache=1746765864510
+    print('\npublicTextSeaqrch given a key')
+    search_data={"name":  "textSearch",
+                 "children": [{"name": "include",
+                              "children": [{"name": "includePart",
+                                           "children": [{"name": "recordIdSearchTerm",
+                                                        "value": "kthTestDiVALoginUnitText"}]}]}]}
+
+    recs=searchResult_search('publicTextSearch', search_data)
+    #print(f'{recs=}')
+    if Verbose_Flag:
+        pprint.pprint(recs)
+    if recs:
+        if not recs.get('dataList'):
+            print('no dataList')
+        else:
+            totalNo_as_str=recs['dataList']['totalNo']
+            number_of_records=int(recs['dataList']['totalNo'])
+            print(f"{number_of_records} records found")
+            if Verbose_Flag:
+                pprint.pprint(recs, width=120)
+            if number_of_records > 0:
+                data_list_records=recs['dataList']['data']
+                for idx, dlr in enumerate(data_list_records):
+                    record_data=dlr['record']['data']
+                    record_data_children=record_data['children']
+                    print(f"record {idx=}")
+                    for drlc in record_data_children:
+                        if Verbose_Flag:
+                            print('printing drlc')
+                            pprint.pprint(drlc, width=120)
+                        if drlc['name'] == 'recordInfo':
+                            print('printing recordInfo')
+                            for gc in drlc['children']:
+                                if gc['name'] == 'id':
+                                    print(f"id: {gc['value']}")
+                        elif drlc['name'] == 'textPart':
+                            print(f"language code: {drlc['attributes']['lang']} type: {drlc['attributes']['type']}")
+                            for gc in drlc['children']:
+                                if gc['name'] == 'text':
+                                    print(f"text value: {gc['value']}")
+
+
+
+
+    Verbose_Flag=False
+    print('diva-output search')
+    # /rest/record/searchResult/diva-outputSearch?searchData=%7B%22name%22%3A%22search%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22recordIdSearchTerm%22%2C%22value%22%3A%22diva-
+
+    search_data={"name": "search",
+                 "children": [{"name": "include",
+                               "children": [{"name": "includePart",
+                                             "children": [{"name": "recordIdSearchTerm",
+                                                           "value": "diva-output:15009801329005961"}]}]}]}
 
     search_result=searchResult_search('diva-outputSearch', search_data)
     print(f"\n{search_result=}")
