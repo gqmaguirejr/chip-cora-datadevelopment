@@ -103,8 +103,8 @@ def get_user():
         print(f"{url=}")
 
     response = requests.get(url, headers=headers)
-
-    print(f"{response.status_code=}")
+    if Verbose_Flag:
+        print(f"{response.status_code=}")
     if response.status_code == requests.codes.ok:
         if Verbose_Flag:
             print(f"{response.text=}")
@@ -202,7 +202,8 @@ def searchResult_search(search_id, search_data):
         print(f"{url=}")
 
     response = requests.get(url, headers=headers, params=payload)
-    print(f"{response.status_code=}")
+    if Verbose_Flag:
+        print(f"{response.status_code=}")
     if response.status_code == requests.codes.ok:
         if Verbose_Flag:
             print(f"{response.text=}")
@@ -241,6 +242,7 @@ def start():
     
     auth_token = app_token_client.get_auth_token()
     print(f"{auth_token}")
+
     Verbose_Flag=False
     user_info_xml=get_user()
     print(f"{len(user_info_xml)=}")
@@ -253,21 +255,38 @@ def start():
     if Verbose_Flag:
         print(f"{top_level_view=}")
 
-    Verbose_Flag=True
+
     fromNo=root.find('./fromNo').text
     toNo=root.find('./toNo').text
     totalNo=root.find('./totalNo').text
     print(f"{fromNo=} {toNo=} {totalNo=}")
 
+    user_type_field_width=16
+    user_id_field_width=30
+    login_id_field_width=40
+    userFirstname_field_width=16
+    userLastname_field_width=16
+
+    totalNo_as_int=int(totalNo)
+    if totalNo_as_int > 0:
+        user_type='user_type'
+        user_id='user_id'
+        login_id='login_id'
+        userFirstname='userFirstname'
+        userLastname='userLastname'
+        print(f"{user_type:<{user_type_field_width}}{user_id:<{user_id_field_width}}{login_id:<{login_id_field_width}}{userFirstname:<{userFirstname_field_width}}{userLastname:<{userLastname_field_width}}")
+
+
     for rec in root.findall('./data/record/data/user'):
-        print(rec.attrib)
+        if Verbose_Flag:
+            print(rec.attrib)
         if rec.attrib and rec.attrib['type']:
             user_type=rec.attrib['type']
             user_id=rec.find('recordInfo/id').text
             login_id=rec.find('loginId').text
             userFirstname=rec.find('userFirstname').text
             userLastname=rec.find('userLastname').text
-            print(f"{user_type}\t{user_id=}\t{login_id=}\t{userFirstname=}\t{userLastname=}")
+            print(f"{user_type:<{user_type_field_width}}{user_id:<{user_id_field_width}}{login_id:<{login_id_field_width}}{userFirstname:<{userFirstname_field_width}}{userLastname:<{userLastname_field_width}}")
 
     # dataList = CommonData.read_source_xml(filePath_sourceXml)
     # list_dataRecord = []
@@ -276,8 +295,10 @@ def start():
     
     # print(f'Number of records read: {len(list_dataRecord)}')
     
+    print(f"\nget_record_json('diva-output', 'diva-output:15009801329005961')")
     rr=get_record_json('diva-output', 'diva-output:15009801329005961')
-    print(f"{rr=}")
+    if Verbose_Flag:
+        print(f"{rr=}")
     pprint.pprint(rr, width=120)
 
     # Returns:
@@ -410,8 +431,10 @@ def start():
 
 
 
+    print(f"\nget_records_json('diva-output')")
     recs=get_records_json('diva-output')
-    print(f"{recs=}")
+    if Verbose_Flag:
+        print(f"{recs=}")
     pprint.pprint(recs, width=120)
 
     # Returns:
@@ -907,18 +930,29 @@ def start():
     #         'toNo': '3',
     #         'totalNo': '3'}}
 
+    print(f"\nget_records_json('diva-person')")
     recs=get_records_json('diva-person')
-    print(f"diva-peron {recs=}")
-    pprint.pprint(recs, width=120)
+    if Verbose_Flag:
+        print(f"diva-peron {recs=}")
+    if recs:
+        if not recs.get('dataList'):
+            print('no dataList')
+        totalNo_as_str=recs['dataList']['totalNo']
+        number_of_records=int(recs['dataList']['totalNo'])
+        print(f"{number_of_records} records found")
+        if number_of_records > 0:
+            pprint.pprint(recs, width=120)
+
+
 
     permanent_record_types=['diva-output', 'diva-publisher', 'diva-journal',
                             'diva-funder', 'diva-publisher', 'diva-person', 'diva-series', 'diva-subject',
                             'diva-course', 'diva-project', 'diva-programme', 'diva-partOfOrganisation',
                             'diva-topOrganisation', 'diva-localGenericMarkup']
 
-    Verbose_Flag=False
+    print(f'\nExplore the different types of permanet record types')
     for ty in permanent_record_types:
-        print(f'exploring {ty}')
+        print(f'\nexploring {ty}')
         recs=get_records_json(ty)
         if recs:
             if not recs.get('dataList'):
@@ -927,6 +961,8 @@ def start():
             totalNo_as_str=recs['dataList']['totalNo']
             number_of_records=int(recs['dataList']['totalNo'])
             print(f"{number_of_records} records found")
+            if number_of_records == 0:
+                continue
             #print(f"{ty} {recs=}")
             if ty not in ['diva-output', 'diva-funder']: # don't pprint these types of records
                 pprint.pprint(recs, width=120)
@@ -937,14 +973,14 @@ def start():
                     record_data_children=record_data['children']
                     for drlc in record_data_children:
                         if drlc['name'] == 'authority':
-                            print(f"{drlc['attributes']=} {drlc['children']=} {drlc['name']=}")
+                            print(f"{drlc['name']}: {drlc['attributes']=}")
                             grand_cildren=drlc['children']
                             for gc in grand_cildren:
                                 if gc['name'] == 'name':
-                                    print(f"{gc['attributes']['type']=}")
+                                    print(f"{drlc['name']}: type {gc['attributes']['type']}")
                                     if gc['children']:
                                         for c in gc['children']:
-                                            print(f"{c['name']=} {c['value']=}")
+                                            print(f"{drlc['name']}: {c['name']} {c['value']}")
                         elif drlc['name'] == 'recordInfo':
                             grand_cildren=drlc['children']
                             for gc in grand_cildren:
@@ -957,13 +993,13 @@ def start():
    
     #/rest/record/searchResult/publicTextSearch?searchData=%7B%22name%22%3A%22textSearch%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22translationSearchTerm%22%2C%22value%22%3A%22kth%22%7D%5D%7D%5D%7D%5D%7D&preventCache=1746762291840
 
-    Verbose_Flag=False
-    print('\npublicTextSeaqrch given a text value')
+    search_value="kth"
+    print(f'\npublicTextSeaqrch given a translationSearchTerm value: {search_value}')
     #search_data={"name":"textSearch","children":[{"name":"include","children":[{"name":"includePart","children":[{"name":"translationSearchTerm","value":"kth"}]}]}]}
     search_data={"name":"textSearch",
                  "children":[{"name":"include",
                               "children":[{"name":"includePart",
-                                           "children":[{"name":"translationSearchTerm","value":"kth"}]}]}]}
+                                           "children":[{"name":"translationSearchTerm","value":search_value}]}]}]}
     recs=searchResult_search('publicTextSearch', search_data)
     #print(f'{recs=}')
     if Verbose_Flag:
@@ -989,34 +1025,25 @@ def start():
                             if Verbose_Flag:
                                 pprint.pprint(drlc, width=120)
                         if drlc['name'] == 'recordInfo':
-                            print('printing recordInfo')
+                            print('recordInfo')
                             for gc in drlc['children']:
                                 if gc['name'] == 'id':
-                                    print(f"id: {gc['value']}")
+                                    print(f"\tid: {gc['value']}")
                         elif drlc['name'] == 'textPart':
                             print(f"language code: {drlc['attributes']['lang']} type: {drlc['attributes']['type']}")
                             for gc in drlc['children']:
                                 if gc['name'] == 'text':
-                                    print(f"text value: {gc['value']}")
-
-                # if drlc['name'] == 'recordInfo':
-                #     grand_cildren=drlc['children']
-                #     for gc in grand_cildren:
-                #                 if gc['name'] == 'id':
-                #                     print(f"id is {gc['value']}")
-                #         elif drlc['name'] in ['attachment', 'admin', 'identifier', 'identifier', 'identifier', 'classification', 'originInfo', 'subject', 'abstract', 'name', 'titleInfo', 'genre', 'language', 'genre' ]:
-                #             continue # simply ignore these cases
-                #         else:
-                #             print(f"unknown case: {drlc['name']}")
-
+                                    print(f"\ttext value: {gc['value']}")
 
     # /rest/record/searchResult/publicTextSearch?searchData=%7B%22name%22%3A%22textSearch%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22recordIdSearchTerm%22%2C%22value%22%3A%22kthTestDiVALoginUnitText%22%7D%5D%7D%5D%7D%5D%7D&preventCache=1746765864510
-    print('\npublicTextSeaqrch given a key')
+
+    key='kthTestDiVALoginUnitText'
+    print(f'\npublicTextSeaqrch given a recordIdSearchTerm: {key}')
     search_data={"name":  "textSearch",
                  "children": [{"name": "include",
                               "children": [{"name": "includePart",
                                            "children": [{"name": "recordIdSearchTerm",
-                                                        "value": "kthTestDiVALoginUnitText"}]}]}]}
+                                                         "value": key}]}]}]}
 
     recs=searchResult_search('publicTextSearch', search_data)
     #print(f'{recs=}')
@@ -1026,6 +1053,7 @@ def start():
         if not recs.get('dataList'):
             print('no dataList')
         else:
+            print(f"Reearch of publicTextSearch for kthTestDiVALoginUnitText")
             totalNo_as_str=recs['dataList']['totalNo']
             number_of_records=int(recs['dataList']['totalNo'])
             print(f"{number_of_records} records found")
@@ -1036,36 +1064,34 @@ def start():
                 for idx, dlr in enumerate(data_list_records):
                     record_data=dlr['record']['data']
                     record_data_children=record_data['children']
-                    print(f"record {idx=}")
+                    if number_of_records > 1:
+                        print(f"record {idx=}")
                     for drlc in record_data_children:
                         if Verbose_Flag:
                             print('printing drlc')
                             pprint.pprint(drlc, width=120)
                         if drlc['name'] == 'recordInfo':
-                            print('printing recordInfo')
+                            print('recordInfo')
                             for gc in drlc['children']:
                                 if gc['name'] == 'id':
-                                    print(f"id: {gc['value']}")
+                                    print(f"\tid: {gc['value']}")
                         elif drlc['name'] == 'textPart':
                             print(f"language code: {drlc['attributes']['lang']} type: {drlc['attributes']['type']}")
                             for gc in drlc['children']:
                                 if gc['name'] == 'text':
-                                    print(f"text value: {gc['value']}")
-
-
-
+                                    print(f"\ttext value: {gc['value']}")
 
     Verbose_Flag=False
-    print('diva-output search')
+    print('\ndiva-output search')
     # /rest/record/searchResult/diva-outputSearch?searchData=%7B%22name%22%3A%22search%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22recordIdSearchTerm%22%2C%22value%22%3A%22diva-
 
+    diva_output_id="diva-output:15009801329005961"
     search_data={"name": "search",
                  "children": [{"name": "include",
                                "children": [{"name": "includePart",
                                              "children": [{"name": "recordIdSearchTerm",
-                                                           "value": "diva-output:15009801329005961"}]}]}]}
+                                                           "value": diva_output_id}]}]}]}
 
-    Verbose_Flag=True
     recs=searchResult_search('diva-outputSearch', search_data)
     if Verbose_Flag:
         pprint.pprint(recs)
@@ -1073,6 +1099,7 @@ def start():
         if not recs.get('dataList'):
             print('no dataList')
         else:
+            print(f"Result of diva-outputSearch for {diva_output_id}")
             totalNo_as_str=recs['dataList']['totalNo']
             number_of_records=int(recs['dataList']['totalNo'])
             print(f"{number_of_records} records found")
@@ -1083,14 +1110,15 @@ def start():
                 for idx, dlr in enumerate(data_list_records):
                     record_data=dlr['record']['data']
                     record_data_children=record_data['children']
-                    print(f"record {idx=}")
+                    if number_of_records > 1:
+                        print(f"record {idx=}")
                     for drlc in record_data_children:
                         if Verbose_Flag:
-                            print('printing drlc')
-                            if drlc['name'] not in ['titleInfo', 'attachment',  'admin', 'identifier', 'name', 'genre', 'language']:
+                            if drlc['name'] not in ['titleInfo', 'attachment',  'admin', 'identifier', 'name', 'genre', 'language', 'recordInfo', 'originInfo', 'classification']:
+                                print('printing drlc')
                                 pprint.pprint(drlc, width=120)
                         if drlc['name'] == 'recordInfo':
-                            print('printing recordInfo')
+                            print('recordInfo')
                             for gc in drlc['children']:
                                 if gc.get('name') in ['permissionUnit', 'validationType', 'dataDivider', 'type', 'createdBy', 'createdBy']:
                                     print(f"\t{gc['name']}")
@@ -1151,7 +1179,7 @@ def start():
                                 print(f"{gc['name']} language code: {gc['value']}, attributes {gc['attributes']['type']} {gc['attributes']['authority']}")
                         elif drlc['name'] == 'admin':
                             for gc in drlc['children']:
-                                print(f"drlc['name']: {gc['name']}: {gc['value']}")
+                                print(f"{drlc['name']}: {gc['name']}: {gc['value']}")
                         elif drlc['name'] == 'genre':
                             print(f"genre: {drlc['value']} type: {drlc['attributes']['type']}")
 
