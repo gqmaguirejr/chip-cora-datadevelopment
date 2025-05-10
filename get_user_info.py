@@ -1187,7 +1187,462 @@ def start():
                             print(f"unknown case {drlc=}")
 
 
+    #searchData=%7B%22name%22%3A%22search%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22genericSearchTerm%22%2C%22value%22%3A%22free_text_a%22%7D%2C%7B%22name%22%3A%22recordIdSearchTerm%22%2C%22value%22%3A%22id_b%22%7D%2C%7B%22name%22%3A%22oldIdSearchTerm%22%2C%22value%22%3A%22oldid_c%22%7D%2C%7B%22name%22%3A%22titleSearchTerm%22%2C%22value%22%3A%22title_d%22%7D%2C%7B%22name%22%3A%22doiSearchTerm%22%2C%22value%22%3A%22doi_e%22%7D%2C%7B%22name%22%3A%22seLibrSearchTerm%22%2C%22value%22%3A%22libris_f%22%7D%2C%7B%22name%22%3A%22localIdSearchTerm%22%2C%22value%22%3A%22local_id_g%22%7D%2C%7B%22name%22%3A%22keywordsSearchTerm%22%2C%22value%22%3A%22keywords_h%22%7D%2C%7B%22name%22%3A%22noteExternalSearchTerm%22%2C%22value%22%3A%22note_i%22%7D%5D%7D%5D%7D%2C%7B%22name%22%3A%22start%22%2C%22value%22%3A%222025%22%7D%5D%7D&preventCache=1746865082895
 
+
+    # it is possible to search using multiple criteria in the diva-output
+    search_data={"name":"search",
+                 "children":[{"name":"include",
+                              "children":[{"name":"includePart",
+                                           "children":[{"name":"genericSearchTerm","value":"free_text_a"},
+                                                       {"name":"recordIdSearchTerm","value":"id_b"},
+                                                       {"name":"oldIdSearchTerm","value":"oldid_c"},
+                                                       {"name":"titleSearchTerm","value":"title_d"},
+                                                       {"name":"doiSearchTerm","value":"doi_e"},
+                                                       {"name":"seLibrSearchTerm","value":"libris_f"},
+                                                       {"name":"localIdSearchTerm","value":"local_id_g"},
+                                                       {"name":"keywordsSearchTerm","value":"keywords_h"},
+                                                       {"name":"noteExternalSearchTerm","value":"note_i"}
+                                                       ]}
+                                          ]},
+                             {"name":"start","value":"2025"}]}
+
+
+    # Additionally, there are two search fields using pull-down lists: ``Sustainable Development'' ("sdgSearchTerm") and `Standard for Swedish classification of research topics (SSIF)'' ("ssifSearchTerm")
+    # In Swedish: Hållbar utveckling and Standard för svensk indelning av forskningsämnen (SSIF)
+
+    # Search?searchData=%7B%22name%22%3A%22search%22%2C%22children%22%3A%5B%7B%22name%22%3A%22include%22%2C%22children%22%3A%5B%7B%22name%22%3A%22includePart%22%2C%22children%22%3A%5B%7B%22name%22%3A%22genericSearchTerm%22%2C%22value%22%3A%22free_text_a%22%7D%2C%7B%22name%22%3A%22recordIdSearchTerm%22%2C%22value%22%3A%22id_b%22%7D%2C%7B%22name%22%3A%22oldIdSearchTerm%22%2C%22value%22%3A%22oldid_c%22%7D%2C%7B%22name%22%3A%22titleSearchTerm%22%2C%22value%22%3A%22title_d%22%7D%2C%7B%22name%22%3A%22doiSearchTerm%22%2C%22value%22%3A%22doi_e%22%7D%2C%7B%22name%22%3A%22seLibrSearchTerm%22%2C%22value%22%3A%22libris_f%22%7D%2C%7B%22name%22%3A%22localIdSearchTerm%22%2C%22value%22%3A%22local_id_g%22%7D%2C%7B%22name%22%3A%22keywordsSearchTerm%22%2C%22value%22%3A%22keywords_h%22%7D%2C%7B%22name%22%3A%22noteExternalSearchTerm%22%2C%22value%22%3A%22note_i%22%7D%2C%7B%22name%22%3A%22sdgSearchTerm%22%2C%22value%22%3A%22sdg1%22%7D%2C%7B%22name%22%3A%22ssifSearchTerm%22%2C%22value%22%3A%2210206%22%7D%5D%7D%5D%7D%2C%7B%22name%22%3A%22start%22%2C%22value%22%3A%222025%22%7D%5D%7D&preventCache=1746872096967
+
+    search_data={"name": "search",
+                 "children": [{"name": "include",
+                               "children": [{"name": "includePart",
+                                             "children": [{"name":"genericSearchTerm", "value":"free_text_a"},
+                                                          {"name":"recordIdSearchTerm","value":"id_b"},
+                                                          {"name":"oldIdSearchTerm","value":"oldid_c"},
+                                                          {"name":"titleSearchTerm","value":"title_d"},
+                                                          {"name":"doiSearchTerm","value":"doi_e"},
+                                                          {"name":"seLibrSearchTerm","value":"libris_f"},
+                                                          {"name":"localIdSearchTerm","value":"local_id_g"},
+                                                          {"name":"keywordsSearchTerm","value":"keywords_h"},
+                                                          {"name":"noteExternalSearchTerm","value":"note_i"},
+                                                          {"name":"sdgSearchTerm","value":"sdg1"},
+                                                          {"name":"ssifSearchTerm","value":"10206"}]
+                                             }]
+                               },
+                              {"name":"start","value":"2025"}]}
+
+    # Note that ``Sustainable Development'' ("sdgSearchTerm") has a pull-down list of the UN's Sustainable Development Goals (SDGs). The options in this list are:
+    # <option value="sdg1">1. No poverty					Ingen fattigdom
+    # <option value="sdg2">2. Zero hunger					Ingen hunger
+    # <option value="sdg3">3. Good health and well-being			God hälsa och välbefinnande
+    # <option value="sdg4">4. Quality education					God utbildning för alla
+    # <option value="sdg5">5. Gender equality					Jämställdhet
+    # <option value="sdg6">6. Clean water and sanitation			Rent vatten och sanitet för alla
+    # <option value="sdg7">7. Affordable and clean energy			Hållbar energi för alla
+    # <option value="sdg8">8. Decent work and economic growth			Anständiga arbetsvillkor och ekonomisk tillväxt
+    # <option value="sdg9">9. Industry, innovation and infrastructure		Hållbar industri, innovationer och infrastruktur
+    # <option value="sdg10">10. Reduced inequalities				Minskad ojämlikhet
+    # <option value="sdg11">11. Sustainable cities and communities		Hållbara städer och samhällen
+    # <option value="sdg12">12. Responsible consumption and production		Hållbar konsumtion och produktion
+    # <option value="sdg13">13. Climate action					Bekämpa klimatförändringarna
+    # <option value="sdg14">14. Life below water				Hav och marina resurser
+    # <option value="sdg15">15. Life on land					Ekosystem och biologisk mångfald
+    # <option value="sdg16">16. Peace, justice and strong institutions		Fredliga och inkluderande samhällen
+    # <option value="sdg17">17. Partnerships for the goals			Genomförande och globalt partnerskap
+
+    # Similarly `Standard for Swedish classification of research topics (SSIF)'' ("ssifSearchTerm") has a pulldown lisat with the following options:
+    # <option value="1">(1) Natural sciences					Naturvetenskap
+	# <option value="101">(101) Mathematical sciences			Matematik
+	# <option value="10101">(10101) Mathematical Analysis			Matematisk analys
+	# <option value="10102">(10102) Geometry				Geometri
+	# <option value="10103">(10103) Algebra and Logic			Algebra och logik
+	# <option value="10104">(10104) Discrete Mathematics			Diskret matematik
+	# <option value="10105">(10105) Computational Mathematics		Beräkningsmatematik
+	# <option value="10106">(10106) Probability Theory and Statistics	Sannolikhetsteori och statistik
+	# <option value="10199">(10199) Other Mathematics			Annan matematik
+	# <option value="102">(102) Computer and Information Sciences		Data- och informationsvetenskap (Datateknik)
+	# <option value="10201">(10201) Computer Sciences			Datavetenskap (datalogi)
+	# <option value="10202">(10202) Information Systems			Systemvetenskap, informationssystem och informatik
+	# <option value="10203">(10203) Bioinformatics (Computational Biology)	Bioinformatik (beräkningsbiologi)
+	# <option value="10204">(10204) Human Computer Interaction		Människa-datorinteraktion (interaktionsdesign)
+	# <option value="10205">(10205) Software Engineering			Programvaruteknik
+	# <option value="10206">(10206) Computer Engineering			Datorteknik
+	# <option value="10207">(10207) Computer graphics and computer vision	Datorgrafik och datorseende
+	# <option value="10208">(10208) Natural Language Processing		Språkbehandling och datorlingvistik
+	# <option value="10210">(10210) Artificial Intelligence			Artificiell intelligens
+	# <option value="10211">(10211) Security, Privacy and Cryptography	Säkerhet, integritet och kryptologi
+	# <option value="10212">(10212) Algorithms				Algoritmer
+	# <option value="10213">(10213) Formal Methods				Formella metoder
+	# <option value="10214">(10214) Networked, Parallel and Distributed Computing	Nätverks-, parallell- och distribuerad beräkning
+	# <option value="10299">(10299) Other Computer and Information Science	Annan data- och informationsvetenskap
+	# <option value="103">(103) Physical Sciences				Fysik
+	# <option value="10301">(10301) Subatomic Physics			Subatomär fysik
+	# <option value="10302">(10302) Atom and Molecular Physics and Optics	Atom- och molekylfysik och optik
+	# <option value="10303">(10303) Fusion, Plasma and Space Physics	Fusion, plasma och rymdfysik
+	# <option value="10304">(10304) Condensed Matter Physics		Den kondenserade materiens fysik
+	# <option value="10305">(10305) Astronomy, Astrophysics, and Cosmology	Astronomi, astrofysik och kosmologi
+        # <option value="10307">(10307) Biophysics				Biofysik
+	# <option value="10308">(10308) Statistical physics and complex systems	Statistisk fysik och komplexa system
+	# <option value="10399">(10399) Other Physics Topics			Annan fysik
+	# <option value="104">(104) Chemical Sciences				Kemi
+	# <option value="10401">(10401) Analytical Chemistry			Analytisk kemi
+	# <option value="10402">(10402) Physical Chemistry			Fysikalisk kemi
+	# <option value="10403">(10403) Materials Chemistry			Materialkemi
+	# <option value="10404">(10404) Inorganic Chemistry			Oorganisk kemi
+	# <option value="10405">(10405) Organic Chemistry			Organisk kemi
+	# <option value="10406">(10406) Polymer Chemistry			Polymerkemi
+	# <option value="10407">(10407) Theoretical Chemistry			Teoretisk kemi
+	# <option value="10408">(10408) Biochemistry				Biokemi
+	# <option value="10499">(10499) Other Chemistry Topics			Annan kemi
+	# <option value="105">(105) Earth and Related Environmental Sciences	Geovetenskap och relaterad miljövetenskap
+	# <option value="10501">(10501) Climate Science				Klimatvetenskap
+	# <option value="10502">(10502) Environmental Sciences			Miljövetenskap
+	# <option value="10503">(10503) Multidisciplinary Geosciences		Multidisciplinär geovetenskap
+	# <option value="10504">(10504) Geology					Geologi
+	# <option value="10505">(10505) Geophysics				Geofysik
+	# <option value="10506">(10506) Geochemistry				Geokemi
+	# <option value="10507">(10507) Physical Geography			Naturgeografi
+	# <option value="10508">(10508) Meteorology and Atmospheric Sciences	Meteorologi och atmosfärsvetenskap
+	# <option value="10509">(10509) Oceanography, Hydrology and Water Resources	Oceanografi, hydrologi och vattenresurser
+	# <option value="10510">(10510) Palaeontology and Palaeoecology		Paleontologi och paleoekologi
+	# <option value="10599">(10599) Other Earth Sciences			Annan geovetenskap
+	# <option value="106">(106) Biological Sciences				Biologi
+	# <option value="10601">(10601) Structural Biology			Strukturbiologi
+	# <option value="10604">(10604) Cell Biology				Cellbiologi
+	# <option value="10605">(10605) Immunology				Immunologi
+	# <option value="10606">(10606) Microbiology				Mikrobiologi
+	# <option value="10607">(10607) Botany					Botanik
+	# <option value="10608">(10608) Zoology					Zoologi
+	# <option value="10609">(10609) Genetics and Genomics			Genetik och genomik
+	# <option value="10610">(10610) Bioinformatics and Computational Biology	Bioinformatik och beräkningsbiologi
+	# <option value="10611">(10611) Ecology					Ekologi
+	# <option value="10612">(10612) Biological Systematics			Biologisk systematik
+	# <option value="10613">(10613) Behavioural Sciences Biology		Etologi
+	# <option value="10614">(10614) Developmental Biology			Utvecklingsbiologi
+	# <option value="10615">(10615) Evolutionary Biology			Evolutionsbiologi
+	# <option value="10616">(10616) Molecular Biology			Molekylärbiologi
+	# <option value="10699">(10699) Other Biological Topics			Annan biologi
+	# <option value="107">(107) Other Natural Sciences			Annan naturvetenskap
+	# <option value="10799">(10799) Other Natural Sciences			Annan naturvetenskap
+	# <option value="2">(2) Engineering and Technology			Teknik
+	# <option value="201">(201) Civil Engineering				Samhällsbyggnadsteknik
+	# <option value="20101">(20101) Architectural Engineering		Arkitekturteknik
+	# <option value="20102">(20102) Construction Management			Byggprocess och förvaltning
+	# <option value="20103">(20103) Building Technologies			Husbyggnad
+	# <option value="20104">(20104) Infrastructure Engineering		Infrastrukturteknik
+	# <option value="20105">(20105) Transport Systems and Logistics		Transportteknik och logistik
+	# <option value="20106">(20106) Geotechnical Engineering and Engineering Geology	Geoteknik och teknisk geologi
+	# <option value="20107">(20107) Water Engineering			Vattenteknik
+	# <option value="20109">(20109) Structural Engineering			Byggkonstruktion
+	# <option value="20110">(20110) Building materials			Byggnadsmaterial
+	# <option value="20199">(20199) Other Civil Engineering			Annan samhällsbyggnadsteknik
+	# <option value="202">(202) Electrical Engineering, Electronic Engineering, Information Engineering	Elektroteknik och elektronik
+	# <option value="20201">(20201) Robotics and automation			Robotik och automation
+	# <option value="20202">(20202) Control Engineering			Reglerteknik
+	# <option value="20203">(20203) Communication Systems			Kommunikationssystem
+	# <option value="20204">(20204) Telecommunications			Telekommunikation
+	# <option value="20205">(20205) Signal Processing			Signalbehandling
+	# <option value="20206">(20206) Computer Systems			Datorsystem
+	# <option value="20207">(20207) Embedded Systems			Inbäddad systemteknik
+	# <option value="20208">(20208) Computer Vision and learning System	Datorseende och lärande system
+	# <option value="20209">(20209) Power Systems and Components		Elkraftsystem och -komponenter
+	# <option value="20299">(20299) Other Electrical Engineering, Electronic Engineering, Information Engineering	Annan elektroteknik och elektronik
+	# <option value="203">(203) Mechanical Engineering			Maskinteknik
+	# <option value="20301">(20301) Applied Mechanics			Teknisk mekanik
+	# <option value="20302">(20302) Vehicle and Aerospace Engineering	Farkost och rymdteknik
+	# <option value="20304">(20304) Energy Engineering			Energiteknik
+	# <option value="20305">(20305) Reliability and Maintenance		Tillförlitlighets- och kvalitetsteknik
+	# <option value="20306">(20306) Fluid Mechanics				Strömningsmekanik
+	# <option value="20307">(20307) Production Engineering, Human Work Science and Ergonomics	Produktionsteknik, arbetsvetenskap och ergonomi
+	# <option value="20309">(20309) Solid and Structural Mechanics		Solid- och strukturmekanik
+	# <option value="20310">(20310) Industrial engineering and management	Industriell ekonomi
+	# <option value="20399">(20399) Other Mechanical Engineering		Annan maskinteknik
+	# <option value="204">(204) Chemical Engineering			Kemiteknik
+	# <option value="20402">(20402) Surface- and Corrosion Engineering	Yt- och korrosionsteknik
+	# <option value="20403">(20403) Polymer Technologies			Polymerteknologi
+	# <option value="20405">(20405) Catalytic Processes			Katalytiska processer
+	# <option value="20406">(20406) Separation Processes			Separationsprocesser
+	# <option value="20407">(20407) Circular Food Process Technologies	Livsmedelsprocessteknik
+	# <option value="20499">(20499) Other Chemical Engineering		Annan kemiteknik
+	# <option value="205">(205) Materials Engineering			Materialteknik
+	# <option value="20501">(20501) Ceramics and Powder Metallurgical Materials	Keramiska och pulvermetallurgiska material
+	# <option value="20502">(20502) Composite Science and Engineering	Kompositmaterial och kompositteknik
+	# <option value="20503">(20503) Paper, Pulp and Fiber Technology	Pappers-, massa- och fiberteknik
+	# <option value="20504">(20504) Textile, Rubber and Polymeric Materials	Textil-, gummi- och polymermaterial
+	# <option value="20505">(20505) Manufacturing, Surface and Joining Technology	Bearbetnings-, yt- och fogningsteknik
+	# <option value="20506">(20506) Metallurgy and Metallic Materials	Metallurgi och metalliska material
+	# <option value="20599">(20599) Other Materials Engineering		Annan materialteknik
+	# <option value="206">(206) Medical Engineering				Medicinteknik
+	# <option value="20601">(20601) Medical Laboratory Technologies		Medicinsk laboratorieteknik
+	# <option value="20602">(20602) Medical Materials			Medicinsk materialteknik
+	# <option value="20603">(20603) Medical Imaging				Medicinsk bildvetenskap
+	# <option value="20604">(20604) Medical Instrumentation			Medicinsk instrumentering
+	# <option value="20605">(20605) Medical Modelling and Simulation	Medicinsk modellering och simulering
+	# <option value="20606">(20606) Medical Informatics Engineering		Medicinteknisk informatik
+	# <option value="20699">(20699) Other Medical Engineering		Annan medicinteknik
+	# <option value="207">(207) Environmental Engineering			Naturresursteknik
+	# <option value="20702">(20702) Energy Systems				Energisystem
+	# <option value="20703">(20703) Earth Observation			Jordobservationsteknik
+	# <option value="20704">(20704) Mineral and Mine Engineering		Mineral- och gruvteknik
+	# <option value="20705">(20705) Marine Engineering			Marinteknik
+	# <option value="20707">(20707) Environmental Management		Miljöteknik och miljöledning
+	# <option value="20799">(20799) Other Environmental Engineering		Annan naturresursteknik
+	# <option value="208">(208) Environmental Biotechnology			Miljöbioteknik
+	# <option value="20801">(20801) Bioremediation				Biosanering
+        # <option value="20802">(20802) Diagnostic Biotechnology		Diagnostisk bioteknologi
+	# <option value="20803">(20803) Water Treatment				Vattenbehandlingsbioteknik
+	# <option value="20899">(20899) Other Environmental Biotechnology	Annan miljöbioteknik
+	# <option value="209">(209) Industrial Biotechnology			Industriell bioteknik
+	# <option value="20901">(20901) Bioprocess Technology			Bioprocessteknik
+	# <option value="20902">(20902) Biochemicals				Biokemikalier
+	# <option value="20903">(20903) Bio Materials				Biomaterial
+	# <option value="20904">(20904) Bioenergy				Bioenergi
+	# <option value="20905">(20905) Pharmaceutical and Medical Biotechnology	Läkemedel- och medicinsk processbioteknik
+	# <option value="20906">(20906) Biocatalysis and Enzyme Technology	Biokatalys och enzymteknik
+	# <option value="20909">(20909) Food Biotechnology			Livsmedelsbioteknik
+	# <option value="20999">(20999) Other Industrial Biotechnology		Annan industriell bioteknik
+	# <option value="210">(210) Nano-technology				Nanoteknik
+	# <option value="21002">(21002) Nanotechnology for Electronic Applications	Nanoteknisk elektronik
+	# <option value="21003">(21003) Nanotechnology for Material Science	Nanoteknisk materialvetenskap
+	# <option value="21004">(21004) Nanotechnology for Energy Applications	Nanotekniska energitillämpningar
+	# <option value="21005">(21005) Nanotechnology for/in Life Science and Medicine	Nanotekniska livsvetenskaper och medicin
+	# <option value="21099">(21099) Other Nanotechnology			Annan nanoteknik
+	# <option value="211">(211) Other Engineering and Technologies		Annan teknik
+	# <option value="21199">(21199) Other Engineering and Technologies	Annan teknik
+	# <option value="3">(3) Medical and Health Sciences			Medicin och hälsovetenskap
+	# <option value="301">(301) Basic Medicine				Medicinska och farmaceutiska grundvetenskaper
+	# <option value="30101">(30101) Pharmaceutical Sciences			Farmaceutiska vetenskaper
+	# <option value="30102">(30102) Pharmacology and Toxicology		Farmakologi och toxikologi
+	# <option value="30103">(30103) Medicinal Chemistry			Läkemedelskemi
+	# <option value="30104">(30104) Social and Clinical Pharmacy		Samhällsfarmaci och klinisk farmaci
+	# <option value="30105">(30105) Neurosciences				Neurovetenskaper
+	# <option value="30106">(30106) Physiology and Anatomy			Fysiologi och anatomi
+	# <option value="30107">(30107) Medical Genetics and Genomics		Medicinsk genetik och genomik
+	# <option value="30108">(30108) Cell and Molecular Biology		Cell- och molekylärbiologi
+	# <option value="30109">(30109) Microbiology in the Medical Area	Mikrobiologi inom det medicinska området
+	# <option value="30110">(30110) Immunology in the Medical Area		Immunologi inom det medicinska området
+	# <option value="30111">(30111) Medical Life Sciences			Medicinska biovetenskaper
+	# <option value="30112">(30112) Basic Cancer Research			Basal cancerforskning
+	# <option value="30113">(30113) Medical Bioinformatics and Systems Biology	Medicinsk bioinformatik och systembiologi
+	# <option value="30114">(30114) Evolution and Developmental Genetics	Evolution och utvecklingsgenetik
+	# <option value="30115">(30115) Medical Epigenetics and Epigenomics	Medicinsk epigenetik och epigenomik
+	# <option value="30116">(30116) Epidemiology				Epidemiologi
+	# <option value="30117">(30117) Medical Informatics			Medicinsk informatik
+	# <option value="30118">(30118) Medical Biostatistics			Medicinsk biostatistik
+	# <option value="30199">(30199) Other Basic Medicine			Andra medicinska och farmaceutiska grundvetenskaper
+	# <option value="302">(302) Clinical Medicine				Klinisk medicin
+	# <option value="30201">(30201) Anesthesiology and Intensive Care	Anestesi och intensivvård
+	# <option value="30202">(30202) Hematology				Hematologi
+	# <option value="30203">(30203) Cancer and Oncology			Cancer och onkologi
+	# <option value="30204">(30204) Dermatology and Venereal Diseases	Dermatologi och venereologi
+	# <option value="30205">(30205) Endocrinology and Diabetes		Endokrinologi och diabetes
+	# <option value="30206">(30206) Cardiology and Cardiovascular Disease	Kardiologi och kardiovaskulära sjukdomar
+	# <option value="30207">(30207) Neurology				Neurologi
+	# <option value="30208">(30208) Radiology and Medical Imaging		Radiologi och bildbehandling
+	# <option value="30209">(30209) Infectious Medicine			Infektionsmedicin
+	# <option value="30211">(30211) Orthopaedics				Ortopedi
+	# <option value="30212">(30212) Surgery					Kirurgi
+	# <option value="30213">(30213) Gastroenterology and Hepatology		Gastroenterologi and hepatologi
+	# <option value="30215">(30215) Psychiatry				Psykiatri
+	# <option value="30216">(30216) Odontology				Odontologi
+	# <option value="30217">(30217) Ophthalmology				Oftalmologi
+	# <option value="30218">(30218) Oto-rhino-laryngology			Oto-rhino-laryngologi
+	# <option value="30219">(30219) Respiratory Medicine and Allergy	Lungmedicin och allergi
+	# <option value="30220">(30220) Gynaecology, Obstetrics and Reproductive Medicine	Gynekologi, obstetrik och reproduktionsmedicin
+	# <option value="30221">(30221) Pediatrics				Pediatrik
+	# <option value="30222">(30222) Geriatrics				Geriatrik
+	# <option value="30223">(30223) Clinical Laboratory Medicine		Klinisk laboratoriemedicin
+	# <option value="30224">(30224) General Medicine			Allmänmedicin
+	# <option value="30225">(30225) Rheumatology				Reumatologi
+	# <option value="30226">(30226) Autoimmunity and Inflammation		Autoimmunitet och inflamation
+	# <option value="30227">(30227) Internal Medicine			Internmedicin
+	# <option value="30228">(30228) Urology					Urologi
+	# <option value="30229">(30229) Nephrology				Njurmedicin
+	# <option value="30230">(30230) Childbirth and Maternity care		Förlossnings- och mödravård
+	# <option value="30299">(30299) Other Clinical Medicine			Annan klinisk medicin
+	# <option value="303">(303) Health Sciences				Hälsovetenskap
+	# <option value="30301">(30301) Health Care&nbsp;Service and Management, Health Policy and Services and&nbsp;Health Economy	Hälso- och sjukvårdsorganisation, hälsopolitik och hälsoekonomi
+	# <option value="30303">(30303) Occupational Health and Environmental Health	Arbetsmedicin och miljömedicin
+	# <option value="30304">(30304) Nutrition and Dietetics			Näringslära och dietkunskap
+	# <option value="30305">(30305) Nursing					Omvårdnad
+	# <option value="30306">(30306) Occupational Therapy			Arbetsterapi
+	# <option value="30307">(30307) Physiotherapy				Fysioterapi
+	# <option value="30308">(30308) Sport and Fitness Sciences		Idrottsvetenskap och fitness
+	# <option value="30309">(30309) Drug Abuse and Addiction		Beroendelära och missbruk
+	# <option value="30310">(30310) Medical Ethics				Medicinsk etik
+	# <option value="30311">(30311) Public Health, Global Health and Social Medicine	Folkhälsovetenskap, global hälsa och socialmedicin
+	# <option value="30312">(30312) Palliative Medicine and Palliative Care	Palliativ medicin och palliativ vård
+	# <option value="30313">(30313) Oral Health				Oral hälsa
+	# <option value="30314">(30314) Rehabilitation Medicine			Rehabiliteringsmedicin
+	# <option value="30399">(30399) Other Health Sciences			Annan hälsovetenskap
+	# <option value="304">(304) Medical Biotechnology			Medicinsk bioteknologi
+	# <option value="30401">(30401) Medical Biotechnology (Focus on Cell Biology (incl. Stem Cell Biology), Molecular Biology, Microbiology, Biochemistry or Biopharmacy)	Medicinsk bioteknologi (Inriktn. mot cellbiologi (inkl. stamcellsbiologi), molekylärbiologi, mikrobiologi, biokemi eller biofarmaci)
+	# <option value="30402">(30402) Biomedical Laboratory Science/Technology	Biomedicinsk laboratorievetenskap/teknologi
+	# <option value="30403">(30403) Biomaterials Science			Biomaterialvetenskap
+	# <option value="30499">(30499) Other Medical Biotechnology		Annan medicinsk bioteknologi
+	# <option value="305">(305) Other Medical and Health Sciences		Annan medicin och hälsovetenskap
+	# <option value="30501">(30501) Forensic Science			Rättsmedicin
+	# <option value="30502">(30502) Gerontology, specialising in Medical and Health Sciences	Gerontologi, medicinsk/hälsovetenskaplig inriktning
+	# <option value="30599">(30599) Other Medical and Health Sciences not elsewhere specified	Övrig annan medicin och hälsovetenskap
+	# <option value="4">(4) Agricultural and Veterinary sciences		Lantbruksvetenskap och veterinärmedicin
+	# <option value="401">(401) Agriculture, Forestry and Fisheries		Jordbruk, skogsbruk och fiske
+	# <option value="40101">(40101) Agricultural Science			Jordbruksvetenskap
+	# <option value="40102">(40102) Horticulture				Trädgårdsvetenskap/hortikultur
+	# <option value="40103">(40103) Food Science				Livsmedelsvetenskap
+	# <option value="40104">(40104) Forest Science				Skogsvetenskap
+	# <option value="40105">(40105) Wood Science				Trävetenskap
+	# <option value="40106">(40106) Soil Science				Markvetenskap
+	# <option value="40107">(40107) Fish and Aquacultural Science		Fisk- och akvakulturforskning
+	# <option value="402">(402) Animal and Dairy Science			Husdjursvetenskap
+	# <option value="40201">(40201) Animal and Dairy Science		Husdjursvetenskap
+	# <option value="403">(403) Veterinary Science				Veterinärmedicin
+	# <option value="40301">(40301) Medical Bioscience			Medicinsk biovetenskap
+	# <option value="40302">(40302) Pathobiology				Patobiologi
+	# <option value="40303">(40303) Clinical Science			Klinisk vetenskap
+	# <option value="40399">(40399) Other Veterinary Science		Annan veterinärmedicin
+	# <option value="404">(404) Agricultural Biotechnology			Bioteknologi med applikationer på växter och djur
+	# <option value="40401">(40401) Plant Biotechnology			Växtbioteknologi
+	# <option value="40402">(40402) Genetics and Breeding in Agricultural Sciences	Genetik och förädling inom lantbruksvetenskap
+	# <option value="405">(405) Other Agricultural Sciences			Annan lantbruksvetenskap
+	# <option value="40502">(40502) Fish and Wildlife Management		Vilt- och fiskeförvaltning
+	# <option value="40504">(40504) Environmental Sciences and Nature Conservation	Miljö- och naturvårdsvetenskap
+	# <option value="40505">(40505) Landscape Architecture			Landskapsarkitektur
+	# <option value="40506">(40506) Agricultural Economics and Management and Rural development	Jordbruksekonomi och landsbygdsutveckling
+	# <option value="40507">(40507) Environmental Economics and Management	Miljöekonomi och förvaltning
+	# <option value="40599">(40599) Other Agricultural Sciences not elsewhere specified	Övrig annan lantbruksvetenskap
+	# <option value="5">(5) Social Sciences					Samhällsvetenskap
+	# <option value="501">(501) Psychology					Psykologi
+	# <option value="50101">(50101) Psychology (Excluding Applied Psychology)	Psykologi (Exklusive tillämpad psykologi)
+	# <option value="50102">(50102) Applied Psychology			Tillämpad psykologi
+	# <option value="502">(502) Economics and Business			Ekonomi och näringsliv
+	# <option value="50201">(50201) Economics				Nationalekonomi
+	# <option value="50202">(50202) Business Administration			Företagsekonomi
+	# <option value="50203">(50203) Economic History			Ekonomisk historia
+	# <option value="503">(503) Educational Sciences			Utbildningsvetenskap
+	# <option value="50301">(50301) Pedagogy				Pedagogik
+	# <option value="50302">(50302) Didactics				Didaktik
+	# <option value="50304">(50304) Educational Work			Pedagogiskt arbete
+	# <option value="50399">(50399) Other Educational Sciences		Annan utbildningsvetenskaplig forskning
+	# <option value="504">(504) Sociology					Sociologi
+	# <option value="50401">(50401) Sociology (Excluding Social Work, Social Anthropology, Demography and Criminology)	Sociologi (Exklusive socialt arbete, socialantropologi, demografi och kriminologi)
+	# <option value="50402">(50402) Social Work				Socialt arbete
+	# <option value="50404">(50404) Social Anthropology			Socialantropologi
+	# <option value="50405">(50405) Demography				Demografi
+	# <option value="50406">(50406) Criminology				Kriminologi
+	# <option value="505">(505) Law						Juridik
+	# <option value="50501">(50501) Law					Juridik
+	# <option value="50503">(50503) Other Legal Research			Annan rättsvetenskaplig forskning
+	# <option value="506">(506) Political Science				Statsvetenskap
+	# <option value="50601">(50601) Political Science (Excluding Peace and Conflict Studies)	Statsvetenskap (Exklusive freds- och konfliktforskning)
+	# <option value="50604">(50604) Peace and Conflict Studies		Freds- och konfliktforskning
+	# <option value="507">(507) Social and Economic Geography		Social och ekonomisk geografi
+	# <option value="50701">(50701) Human Geography				Kulturgeografi
+	# <option value="50702">(50702) Economic Geography			Ekonomisk geografi
+	# <option value="50703">(50703) Other Geographic Studies		Andra geografiska studier
+	# <option value="508">(508) Media and Communications			Medie-, kommunikations-, och informationsvetenskaper
+	# <option value="50801">(50801) Media and Communication Studies		Medie- och kommunikationsvetenskap
+	# <option value="50804">(50804) Information Systems, Social aspects	Systemvetenskap, informationssystem och informatik med samhällsvetenskaplig inriktning
+	# <option value="50805">(50805) Information Studies			Biblioteks-och informationsvetenskap
+	# <option value="509">(509) Other Social Sciences			Annan samhällsvetenskap
+	# <option value="50902">(50902) Gender Studies				Genusstudier
+	# <option value="50903">(50903) Work Sciences				Arbetslivsstudier
+	# <option value="50904">(50904) International Migration and Ethnic Relations	Internationell migration och etniska relationer (IMER)
+	# <option value="50905">(50905) Public Administration Studies		Studier av offentlig förvaltning
+	# <option value="50906">(50906) Development Studies			Utvecklingsstudier
+	# <option value="50907">(50907) Statistics in Social Sciences		Statistik inom samhällsvetenskap
+	# <option value="50908">(50908) Health and Diet Studies in Social Sciences	Samhällsvetenskapliga hälso- och koststudier
+	# <option value="50909">(50909) Environmental Studies in Social Sciences	Miljövetenskapliga studier inom samhällsvetenskap
+	# <option value="50910">(50910) Child and Youth Studies			Barn- och ungdomsvetenskap
+	# <option value="50911">(50911) War, Crisis, and Security Studies	Krigs-, kris-, säkerhetsvetenskaper
+	# <option value="50912">(50912) Science and Technology Studies		Teknik och samhälle
+	# <option value="50999">(50999) Other Social Sciences not elsewhere specified	Övrig annan samhällsvetenskap
+	# <option value="6">(6) Humanities and the Arts				Humaniora och konst
+	# <option value="601">(601) History and Archaeology			Historia och arkeologi
+	# <option value="60101">(60101) History					Historia
+	# <option value="60102">(60102) Technology and Environmental History	Teknik- och miljöhistoria
+	# <option value="60103">(60103) Archaeology				Arkeologi
+	# <option value="60104">(60104) History of Science and Ideas		Idé- och lärdomshistoria
+	# <option value="60105">(60105) Classical Archaeology and Ancient History	Antikvetenskap
+	# <option value="602">(602) Languages and Literature			Språk och litteratur
+	# <option value="60201">(60201) Comparative Language Studies and Linguistics	Jämförande språkvetenskap och allmän lingvistik
+	# <option value="60202">(60202) Studies of Specific Languages		Studier av enskilda språk
+	# <option value="60203">(60203) General Literary&nbsp;studies		Litteraturvetenskap
+	# <option value="60204">(60204) Studies of Specific Literatures		Litteraturstudier
+	# <option value="60205">(60205) Philology				Filologi
+	# <option value="60206">(60206) Translation Studies			Översättningsvetenskap
+	# <option value="60207">(60207) Rhetoric				Retorik
+	# <option value="603">(603) Philosophy, Ethics and Religion		Filosofi, etik och religion
+	# <option value="60301">(60301) Philosophy				Filosofi
+	# <option value="60302">(60302) Ethics					Etik
+	# <option value="60303">(60303) Religious Studies			Religionsvetenskap
+	# <option value="60304">(60304) History of Religions			Religionshistoria
+	# <option value="60306">(60306) Aesthetics				Estetik
+	# <option value="604">(604) Arts					Konst
+	# <option value="60407">(60407) Art History				Konstvetenskap
+	# <option value="60408">(60408) Musicology				Musikvetenskap
+	# <option value="60409">(60409) Performing Art Studies		Teatervetenskap
+	# <option value="60410">(60410) Film Studies				Filmvetenskap
+	# <option value="60411">(60411) Visual Arts				Fri Konst
+	# <option value="60412">(60412) Music					Musik
+	# <option value="60413">(60413) Literary Composition			Litterär gestaltning
+	# <option value="60414">(60414) Performing Arts				Scenkonst
+	# <option value="60415">(60415) Architecture				Arkitektur
+	# <option value="60416">(60416) Design					Design
+	# <option value="60417">(60417) Film					Film
+	# <option value="60418">(60418) Crafts					Konsthantverk
+	# <option value="60419">(60419) Photography				Fotografi
+	# <option value="605">(605) Other Humanities				Annan humaniora och konst
+	# <option value="60502">(60502) Cultural Studies			Kulturstudier
+        # <option value="60503">(60503) Ethnology				Etnologi
+	# <option value="60504">(60504) Interdisciplinary Studies in Humanities and Arts	Tvärdiciplinära studier i humaniora och konst
+	# <option value="60599">(60599) Other Humanities not elsewhere specified</select>	Övrig annan humaniora
+
+    if False:
+        print(f"\nget_records_json('validationType')")
+        recs=get_records_json('validationType')
+        if Verbose_Flag:
+            print(f"{recs=}")
+        pprint.pprint(recs, width=120)
+
+    print(f"\nget_record_json('validationType', 'diva_degree-project')")
+    recs=get_record_json('validationType', 'diva_degree-project')
+    if Verbose_Flag:
+        print(f"{recs=}")
+    pprint.pprint(recs, width=120)
+
+    # metadata/degreeProjectNewGroup
+    print(f"\nget_record_json('metadata', 'degreeProjectNewGroup')")
+    recs=get_record_json('metadata', 'degreeProjectNewGroup')
+    if Verbose_Flag:
+        print(f"{recs=}")
+    pprint.pprint(recs, width=120)
+
+    for al in recs['record']['actionLinks']:
+        print(f"action link: {al}")
+
+    for d in recs['record']['data']:
+        print(f"{type(d)} data: {d}")
+    print(f"type: {recs['record']['data']['attributes']['type']}")
+    print(f"name: {recs['record']['data']['name']}")
+    for c in recs['record']['data']['children']:
+        if c.get('name'):
+            print(f"\tname: {c.get('name')} {c.get('value')}")
+        if c.get('children'):
+            for gc in c['children']:
+                if gc.get('name'):
+                    print(f"\t\tname: {gc.get('name')} {gc.get('value')} {gc.get('repeatId')}")
+                if gc.get('children'):
+                    for ggc in gc['children']:
+                        if ggc.get('name'):
+                            print(f"\t\t\tname: {ggc.get('name')}  {ggc.get('value')}")
+                        if ggc.get('children'):
+                            for gggc in ggc['children']:
+                                if gggc.get('name'):
+                                    print(f"\t\t\t\tname: {gggc.get('name')} {gggc.get('value')}")
+
+            
+        # else:
+        #     print(f"{d} is unexpected")
 
     Verbose_Flag=False    
     print(f'Tidsåtgång: {time.time() - starttime}')
