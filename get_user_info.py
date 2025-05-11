@@ -221,6 +221,35 @@ def searchResult_search(search_id, search_data):
             print(f"{response.status_code=} {response.text=}")
     return page_response
 
+def delete_a_record(recordType, record_id):
+    global Verbose_Flag
+    global app_token_client
+
+    recs=get_record_json(recordType, record_id)
+    print(f"recs for {recordType}: {record_id}")
+    if recs:
+        if Verbose_Flag:
+            pprint.pprint(recs)
+        for al in recs['record']['actionLinks']:
+            if Verbose_Flag:
+                print(f"action link: {al}")
+            if al == 'delete':
+                del_url=recs['record']['actionLinks']['delete']['url']
+                print(f"{del_url=}")
+                # try deleting a record
+                del_auth_token = app_token_client.get_auth_token()
+                del_headers = { 'Accept': '*/*',
+                                'authToken': del_auth_token}
+                response = requests.delete(del_url, headers=del_headers)
+                # print(f"{response.status_code=}\n{response.text=}\n{response.headers=}\n{response.request.headers=}")
+                if response.status_code == '200':
+                    if Verbose_Flag:
+                        print(f"successfully deleted: {del_url}")
+                    return True
+    else:
+        if Verbose_Flag:
+            print("record not found")       
+    return False
 
 def start():
     global data_logger
@@ -986,8 +1015,12 @@ def start():
                             for gc in grand_cildren:
                                 if gc['name'] == 'id':
                                     print(f"id is {gc['value']}")
-                        elif drlc['name'] in ['attachment', 'admin', 'identifier', 'identifier', 'identifier', 'classification', 'originInfo', 'subject', 'abstract', 'name', 'titleInfo', 'genre', 'language', 'genre' ]:
+                        elif drlc['name'] in ['attachment', 'admin', 'identifier', 'identifier', 'identifier', 'classification', 'originInfo', 'subject', 'abstract', 'name', 'titleInfo', 'genre', 'language', 'genre']:
                             continue # simply ignore these cases
+                        elif drlc['name'] in  ['location']:
+                            grand_cildren=drlc['children']
+                            for gc in grand_cildren:
+                                print(f"\t{gc['name']} {gc.get('value')}")
                         else:
                             print(f"unknown case: {drlc['name']}")
    
@@ -1644,7 +1677,11 @@ def start():
         # else:
         #     print(f"{d} is unexpected")
 
-    Verbose_Flag=False    
+    Verbose_Flag=False
+    records_to_delete = ['diva-journal:22032485904726285', 'diva-journal:22032485904207272', 'diva-journal:22032485903647429', 'diva-journal:22032485904252629', 'diva-journal:22032485903712357']
+    for rec in records_to_delete:
+        delete_a_record('diva-journal', rec)
+
     print(f'Tidsåtgång: {time.time() - starttime}')
 
     # shutdown in an orderly maner by cancelling the timer for the authToken

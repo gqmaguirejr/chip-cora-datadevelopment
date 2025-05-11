@@ -1,4 +1,4 @@
-
+#!/usr/bin/python3
 from multiprocessing import Pool
 from multiprocessing.pool import ThreadPool
 import os
@@ -16,12 +16,14 @@ from cora.client.AppTokenClient import AppTokenClient
 from tqdm import tqdm
 import xml.etree.ElementTree as ET
 
-#system = 'preview'
-# system = 'local'
+
+#system = 'mig'
 system = 'pre'
+# system = 'local'
 recordType = 'diva-journal'
 nameInData = 'journal'
-WORKERS = 8
+permission_unit = None
+WORKERS = 16
 filePath_validateBase = (r"validationOrder_base.xml")
 # filePath_sourceXml = (r"db_xml\db_diva-"+nameInData+".xml")
 filePath_sourceXml = (r"db_xml/journal_from_db.xml")
@@ -30,6 +32,21 @@ request_counter = 0
 app_token_client = None
 data_logger = None
 
+from atexit import register
+
+# Note that you cannot cancel the MainThread
+def all_done():
+    #global Verbose_Flag
+    Verbose_Flag=False
+    for thr in threading._enumerate():
+        if Verbose_Flag:
+            print(f"{thr.name=}")
+        if thr.name != 'MainThread':
+            if thr.is_alive():
+                thr.cancel()
+                thr.join()
+
+register(all_done)
 
 def start():
     global data_logger
@@ -69,6 +86,12 @@ def start():
 #    global app_token_client
     
     print(f'Tidsåtgång: {time.time() - starttime}')
+    
+    # shutdown in an orderly maner by cancelling the timer for the authToken
+    # The all_done() function will get called to kill off all the threads
+    app_token_client.cancel_timer()
+    #stat=giveup_token(app_token_client.get_auth_token())
+
 
     
 def start_app_token_client():
@@ -86,7 +109,7 @@ def start_app_token_client():
 
 def new_record_build(data_record):
         newRecordElement = ET.Element(nameInData)
-        CommonData.recordInfo_build(nameInData, data_record, newRecordElement)
+        CommonData.recordInfo_build(nameInData, permission_unit, data_record, newRecordElement)
         CommonData.titleInfo_build(data_record, newRecordElement)
         counter = 0
         counter = CommonData.identifier_build(data_record, newRecordElement, 'pissn', counter)
@@ -101,15 +124,15 @@ def validate_record(data_record):
     global data_logger
     
     auth_token = app_token_client.get_auth_token()
-    validate_headers_xml = {'Content-Type':'application/vnd.uub.workorder+xml',
-                            'Accept':'application/vnd.uub.record+xml', 'authToken':auth_token}
+    validate_headers_xml = {'Content-Type':'application/vnd.cora.workorder+xml',
+                            'Accept':'application/vnd.cora.record+xml', 'authToken':auth_token}
     validate_url = ConstantsData.BASE_URL[system] + 'workOrder'
     newRecordToCreate = new_record_build(data_record)
     oldId_fromSource = CommonData.get_oldId(data_record)
     newRecordToValidate = CommonData.validateRecord_build(nameInData, filePath_validateBase, newRecordToCreate)
     output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + ET.tostring(newRecordToValidate).decode("UTF-8")
     response = requests.post(validate_url, data=output, headers=validate_headers_xml)
-#    print(response.status_code, response.text)
+    print(f"validate_record {response.status_code}, {response.text}")
     if '<valid>true</valid>' not in response.text:
         with open(f'errorlog.txt', 'a', encoding='utf-8') as log:
             log.write(f"{oldId_fromSource}: {response.status_code}. {response.text}\n\n")
@@ -124,14 +147,15 @@ def create_record(data_record):
     global data_logger
     
     auth_token = app_token_client.get_auth_token()
-    headersXml = {'Content-Type':'application/vnd.uub.record+xml',
-                  'Accept':'application/vnd.uub.record+xml', 'authToken':auth_token}
+    headersXml = {'Content-Type':'application/vnd.cora.recordgroup+xml',
+                  'Accept':'application/vnd.cora.record+xml', 'authToken':auth_token}
     urlCreate = ConstantsData.BASE_URL[system] + recordType
     recordToCreate = new_record_build(data_record)
     oldId_fromSource = CommonData.get_oldId(data_record)
     output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + ET.tostring(recordToCreate).decode("UTF-8")
     response = requests.post(urlCreate, data=output, headers=headersXml)
-#    print(response.status_code, response.text)
+    print(f"create_record {response.status_code}, {response.text}")
+
     if response.text:
         data_logger.info(f"{oldId_fromSource}: {response.status_code}. {response.text}")
     if response.status_code not in ([201]):
