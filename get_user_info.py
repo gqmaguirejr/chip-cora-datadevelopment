@@ -251,6 +251,55 @@ def delete_a_record(recordType, record_id):
             print("record not found")       
     return False
 
+def get_languageItem(recs):
+    rdn=recs['record']['data']['name']
+    cid=None
+    clang=None
+    text_lang_name=dict()
+    if rdn == 'metadata':
+        rdc=recs['record']['data']['children']
+        for c in rdc:
+            if c['name'] == 'recordInfo':
+                for gc in c['children']:
+                    if gc['name'] == 'id':
+                        cid =  gc.get('value')
+    return cid
+
+def get_languageItemTextId(recs):
+    rdn=recs['record']['data']['name']
+    cid=None
+    clang=None
+    text_lang_name=dict()
+    if rdn == 'metadata':
+        rdc=recs['record']['data']['children']
+        for c in rdc:
+            if c['name'] == 'textId':
+                for gc in c['children']:
+                    if gc['name'] == 'linkedRecordId':
+                        cid =  gc.get('value')
+    return cid
+
+
+
+def get_languageItemText(recs):
+    rdn=recs['record']['data']['name']
+    cid=None
+    clang=None
+    text_lang_name=dict()
+    if rdn == 'text':
+        rdc=recs['record']['data']['children']
+        for c in rdc:
+            if c['name'] == 'recordInfo':
+                for gc in c['children']:
+                    if gc['name'] == 'id':
+                        cid =  gc.get('value')
+            elif c['name'] == 'textPart':
+                clang=c['attributes'].get('lang')
+                for gc in c['children']:
+                    text_lang_name[clang]=gc.get('value')
+    return cid, text_lang_name
+
+
 def start():
     global data_logger
     global Verbose_Flag
@@ -1677,10 +1726,94 @@ def start():
         # else:
         #     print(f"{d} is unexpected")
 
+    print(f"\nget_record_json('validationType', 'diva-journal')")
+    recs=get_record_json('validationType', 'diva-journal')
+    if Verbose_Flag:
+        print(f"{recs=}")
+    pprint.pprint(recs, width=120)
+
+
+    m='namePersonalAuthorGroup'
+    print(f"\nget_record_json('metadata', {m})")
+    recs=get_record_json('metadata', m)
+    if Verbose_Flag:
+        print(f"{recs=}")
+    pprint.pprint(recs, width=120)
+
+    m='titleInfoLangGroup'
+    print(f"\nget_record_json('metadata', {m})")
+    recs=get_record_json('metadata', m)
+    if Verbose_Flag:
+        print(f"{recs=}")
+    pprint.pprint(recs, width=120)
+
+
+    m='langCollectionVar'
+    print(f"\nget_record_json('metadata', {m})")
+    recs=get_record_json('metadata', m)
+    if Verbose_Flag:
+        print(f"{recs=}")
+    pprint.pprint(recs, width=120)
+
+    languageCollectionDict=dict()
+    languageCollectionDictLang=dict()
+
+    m='languageCollection'
+    print(f"\nget_record_json('metadata', {m})")
+    recs=get_record_json('metadata', m)
+    if Verbose_Flag:
+        print(f"{recs=}")
+        pprint.pprint(recs, width=120)
+    rdc=recs['record']['data']['children']
+    for rdm in rdc:
+        if rdm['name'] == 'collectionItemReferences':
+            for gc in rdm['children']:
+                rid=gc.get('repeatId')
+                for ggc in gc['children']:
+                    if ggc['name'] == 'linkedRecordId':
+                            languageCollectionDict[ggc['value']]=rid
+    print(f"{languageCollectionDict=}")
+
+
+    for m in languageCollectionDict:
+        if Verbose_Flag:
+            print(f"\nget_record_json('metadata', {m})")
+        recs=get_record_json('metadata', m)
+        if Verbose_Flag:
+            print(f"{recs=}")
+            pprint.pprint(recs, width=120)
+        t=get_languageItemTextId(recs)
+        if Verbose_Flag:
+            print(f"{t}")
+
+        if Verbose_Flag:
+            print(f"\nget_record_json('text', {t})")
+        recs=get_record_json('text', t)
+        if Verbose_Flag:
+            print(f"{recs=}")
+            pprint.pprint(recs, width=120)
+        cid, text_lang_name= get_languageItemText(recs)
+        if Verbose_Flag:
+            print(f"{cid} {text_lang_name}")
+        languageCollectionDictLang[m]={'cid': cid, 'names': text_lang_name}
+
+    print(f"{languageCollectionDictLang=}")
+
+    # t='sweLangItemText'
+    # print(f"\nget_record_json('text', {t})")
+    # recs=get_record_json('text', t)
+    # if True or Verbose_Flag:
+    #     print(f"{recs=}")
+    #     pprint.pprint(recs, width=120)
+    #     cid, text_lang_name= get_languageItemText(recs)
+    #     print(f"{cid} {text_lang_name}")
+
+
     Verbose_Flag=False
     records_to_delete = ['diva-journal:22032485904726285', 'diva-journal:22032485904207272', 'diva-journal:22032485903647429', 'diva-journal:22032485904252629', 'diva-journal:22032485903712357']
-    for rec in records_to_delete:
-        delete_a_record('diva-journal', rec)
+    if False:
+        for rec in records_to_delete:
+            delete_a_record('diva-journal', rec)
 
     print(f'Tidsåtgång: {time.time() - starttime}')
 
