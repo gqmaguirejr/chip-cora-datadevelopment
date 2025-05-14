@@ -46,7 +46,7 @@ def start():
     print(f'Tidsåtgång: {time.time() - starttime}')
 
 
-system = "preview"
+system = "pre"
 WORKERS = 16
 NUMBEROFVALIDATEDRECORDS = 0
 

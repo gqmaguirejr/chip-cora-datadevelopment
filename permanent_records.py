@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import xml.etree.ElementTree as ET
 import requests
 
@@ -657,11 +658,11 @@ def validate_build(record_type):
 # create the record and post
 def create(root, record_type):
     output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+ET.tostring(root).decode("UTF-8")
-    if record_type in ["topOrganisation", "partOfOrganisation"]:
-        response = requests.post(f"{basic_urls[url]}{"diva-organisation"}", data=output, headers=xml_headers)
-    else:
-        response = requests.post(f"{basic_urls[url]}{RECORDID_ENDPOINT[record_type]}", data=output, headers=xml_headers)
-    print (response.status_code, response.text)
+    # if record_type in ["topOrganisation", "partOfOrganisation"]:
+    #     response = requests.post(f"{basic_urls[url]}{"diva-organisation"}", data=output, headers=xml_headers)
+    # else:
+    #     response = requests.post(f"{basic_urls[url]}{RECORDID_ENDPOINT[record_type]}", data=output, headers=xml_headers)
+    # print (response.status_code, response.text)
     print(output) # <-- visar i konsollen vad man skickar in vid en create
     #print(f"{basic_urls[url]}{RECORDID_ENDPOINT[record_type]}") #record_type
     #print(xml_headers)
@@ -750,15 +751,18 @@ def createRecord():
                 print(f"Function for '{record_type}' not found")
 
 # choose for validate...
-validateLinks = 'true' # <--'true' or 'false'
+validateLinks = 'new' # <--'true' or 'false'
 metadataToValidate = 'new' # <-- 'new' or 'existing'
 # choose values to create with...
-recordId = ['partOfOrganisation'] # <-- ändra posttyp, välj vilken som skapas or 'all'
-id = '444' # <-- ändra postens id-nummer
-url = 'dev' # <-- ändra miljö, URL [preview, pre, dev]
+#recordId = ['partOfOrganisation'] # <-- ändra posttyp, välj vilken som skapas or 'all'
+recordId = ['output']
+id = '444444' # <-- ändra postens id-nummer
+url = 'pre' # <-- ändra miljö, URL [preview, pre, dev]
 
 def start():
     #validateRecord()
     createRecord()
 
-start()
+if __name__ == "__main__":
+    start()
+

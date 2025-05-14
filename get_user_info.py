@@ -19,6 +19,7 @@ import xml.etree.ElementTree as ET
 import json
 import gzip
 import pprint
+import optparse
 
 #system = 'preview'
 # system = 'local'
@@ -300,27 +301,7 @@ def get_languageItemText(recs):
     return cid, text_lang_name
 
 
-def start():
-    global data_logger
-    global Verbose_Flag
-    Verbose_Flag=True
-
-#    login_logger = RunRotatingLogger('login', 'logs/apptokenlog.txt').get()
-#    login_logger.info(f"_handle_login_response:{response}")
-    
-    data_logger = RunRotatingLogger('data', 'logs/data_processing.txt').get()
-    data_logger.info("Data processing started")
-    
-    
-    # for testing by GQMJr
-    print("made it to start()")
-
-    starttime = time.time()
-    start_app_token_client()
-    
-    auth_token = app_token_client.get_auth_token()
-    print(f"{auth_token}")
-
+def test_block1():
     Verbose_Flag=False
     user_info_xml=get_user()
     print(f"{len(user_info_xml)=}")
@@ -1807,14 +1788,371 @@ def start():
     #     pprint.pprint(recs, width=120)
     #     cid, text_lang_name= get_languageItemText(recs)
     #     print(f"{cid} {text_lang_name}")
-
-
     Verbose_Flag=False
     records_to_delete = ['diva-journal:22032485904726285', 'diva-journal:22032485904207272', 'diva-journal:22032485903647429', 'diva-journal:22032485904252629', 'diva-journal:22032485903712357']
     if False:
         for rec in records_to_delete:
             delete_a_record('diva-journal', rec)
 
+
+
+# create recordInfo-part
+def recordInfo(id, root, record_type):
+    recordInfo = ET.SubElement(root, "recordInfo")
+    excluded_types = ["output", "publisher", "funder", "subject", "series", "topOrganisation", "partOfOrganisation"]
+    if record_type not in excluded_types:
+        ET.SubElement(recordInfo, "id").text = id
+    if record_type != "publisher" and record_type != "journal" and record_type != "funder":
+        ET.SubElement(recordInfo, "recordContentSource").text = "uu"
+    if record_type == "output":
+        ET.SubElement(recordInfo, "genre", type = "outputType").text = "publication_report"
+    validationType = ET.SubElement(recordInfo, "validationType")
+    ET.SubElement(validationType, "linkedRecordType").text = "validationType"
+    ET.SubElement(validationType, "linkedRecordId").text = RECORDID_ENDPOINT[record_type] #record_type
+    dataDivider = ET.SubElement(recordInfo, "dataDivider")
+    ET.SubElement(dataDivider, "linkedRecordType").text = "system"
+    ET.SubElement(dataDivider, "linkedRecordId").text = "divaPreview" # <-- divaData för vanliga poster, divaPreview för beständiga poster på Preview!
+
+
+# create output
+def output(root):
+    global Verbose_Flag
+    global json_dict
+    if Verbose_Flag:
+        print(f"entering output(root)")
+
+    artisticWork = ET.SubElement(root, "artisticWork", type="outputType") 
+    artisticWork.text = "true"  
+    language = ET.SubElement(root, "language", repeatId="0")
+    ET.SubElement(language, "languageTerm", authority="iso639-2b", type="code").text = json_dict['Title']['Language']
+    #ET.SubElement(root, "note", type="publicationStatus").text = "accepted"  
+    #ET.SubElement(root, "genre", type="contentType").text = "ref"
+    #ET.SubElement(root, "genre", type="reviewed").text = "refereed"
+    #ET.SubElement(root, "typeOfResource").text = "movingImage"
+    #titleInfo = ET.SubElement(root, "titleInfo", lang="swe")
+    titleInfo = ET.SubElement(root, "titleInfo", lang=json_dict['Title']['Language'])
+    ET.SubElement(titleInfo, "title").text = json_dict['Title']['Main title']
+    subtitle=json_dict['Title'].get('Subtitle')
+    if subtitle:
+        ET.SubElement(titleInfo, "subTitle").text = subtitle
+    alt_title=json_dict.get('Alternative title')
+    if alt_title:
+        titleInfo_alt = ET.SubElement(root, "titleInfo", lang=alt_title['Language'], repeatId="1", type="alternative")
+        ET.SubElement(titleInfo_alt, "title").text = alt_title['Main title']
+        alt_subtitle=alt_title.get('Subtitle')
+        if alt_subtitle:
+            ET.SubElement(titleInfo_alt, "subTitle").text = alt_subtitle
+    author1=json_dict['Author1']
+    author2=json_dict.get('Author2')
+    name_personal = ET.SubElement(root, "name", repeatId="2", type="personal")
+    person = ET.SubElement(name_personal, "person")
+    ET.SubElement(person, "linkedRecordType").text = "diva-person"
+    ET.SubElement(person, "linkedRecordId").text = "444"
+    name_corporate = ET.SubElement(root, "name", repeatId="3", type="corporate")
+    organisation = ET.SubElement(name_corporate, "organisation")
+    ET.SubElement(organisation, "linkedRecordType").text = "diva-organisation"
+    ET.SubElement(organisation, "linkedRecordId").text = "diva-organisation:1530219071900116" 
+    ET.SubElement(root, "note", type="creatorCount").text = "1"
+
+    # abstracts
+    eng_abstract="""An abstract is (typically) about 250 and 350 words (1/2 A4-page) with the following components:\n% key parts of the abstract\n\begin{itemize}\n\item What is the topic area? (optional) Introduces the subject area for the project.\n\item Short problem statement\n\item Why was this problem worth a third-cycle thesis? (\ie why is the problem both significant and of a suitable degree of difficulty for your intended degree? Why has no one else solved it yet?)\n\item How did you solve the problem? What was your method/insight?\n\item Results/Conclusions/Consequences/Impact: What are your key results/\linebreak[4]conclusions? What will others do based on your results? What can be done now that you have finished - that could not be done before your thesis project was completed?\end{itemize}\n"""
+    ET.SubElement(root, "abstract", lang="eng", repeatId="4").text = eng_abstract
+
+    eng_keywords="Canvas Learning Management System, Docker containers, Performance tuning"
+    subject = ET.SubElement(root, "subject", lang="end", repeatId="5")
+    ET.SubElement(subject, "topic").text = eng_keywords
+    ET.SubElement(root, "classification", authority="ssif", repeatId="6").text = "10201"
+    subject_diva = ET.SubElement(root, "subject", authority="diva")  
+    topic_diva = ET.SubElement(subject_diva, "topic", repeatId="7")  
+    ET.SubElement(topic_diva, "linkedRecordType").text = "diva-subject" 
+    ET.SubElement(topic_diva, "linkedRecordId").text = "diva-subject:1437069069944102" 
+
+    #subject_sdg = ET.SubElement(root, "subject", authority="sdg")
+    #ET.SubElement(subject_sdg, "topic", repeatId="8").text = "sdg3"
+
+    originInfo = ET.SubElement(root, "originInfo") 
+    dateIssued = ET.SubElement(originInfo, "dateIssued") 
+    ET.SubElement(dateIssued, "year").text = "2023" 
+    ET.SubElement(dateIssued, "month").text = "12" 
+    ET.SubElement(dateIssued, "day").text = "02" 
+    copyrightDate = ET.SubElement(originInfo, "copyrightDate") 
+    ET.SubElement(copyrightDate, "year").text = "2021" 
+    ET.SubElement(copyrightDate, "month").text = "12" 
+    ET.SubElement(copyrightDate, "day").text = "01" 
+    dateOther = ET.SubElement(originInfo, "dateOther", type="online") 
+    ET.SubElement(dateOther, "year").text = "2023" 
+    ET.SubElement(dateOther, "month").text = "12" 
+    ET.SubElement(dateOther, "day").text = "03" 
+    agent = ET.SubElement(originInfo, "agent") 
+    publisher = ET.SubElement(agent, "publisher", repeatId="9") 
+    ET.SubElement(publisher, "linkedRecordType").text = "diva-publisher" 
+    ET.SubElement(publisher, "linkedRecordId").text = "diva-publisher:1437068056503025" 
+    role = ET.SubElement(agent, "role") 
+    ET.SubElement(role, "roleTerm").text = "pbl" 
+    place = ET.SubElement(originInfo, "place", repeatId="10") 
+    ET.SubElement(place, "placeTerm").text = "Stockholm" 
+    #ET.SubElement(originInfo, "edition").text = "2" 
+    #ET.SubElement(root, "note", type="external").text = "Extern anteckning om resursen (synlig publikt)" 
+    #location = ET.SubElement(root, "location", repeatId="11") 
+    #ET.SubElement(location, "url").text = "url.se" 
+    #ET.SubElement(location, "displayLabel").text = "En länktext" 
+    #ET.SubElement(root, "identifier", type="doi").text = "10.1000/182" 
+    #ET.SubElement(root, "identifier", repeatId="12", type="localId").text = "Valfritt lokalt ID här" 
+    #ET.SubElement(root, "identifier", type="archiveNumber").text = "345435" 
+    #ET.SubElement(root, "identifier", type="patentNumber").text = "234324" 
+    #ET.SubElement(root, "identifier", type="pmid").text = "10097079" 
+    #ET.SubElement(root, "identifier", type="wos").text = "56565675" 
+    #ET.SubElement(root, "identifier", type="scopus").text = "2-s2.0-12" 
+    #ET.SubElement(root, "identifier", type="openAlex").text = "Open Alex ID" 
+    #ET.SubElement(root, "identifier", type="se-libr").text = "1234ABcd" 
+    #ET.SubElement(root, "identifier", type="isrn").text = "4567867687" 
+    #ET.SubElement(root, "identifier", displayLabel="print", repeatId="13", type="isbn").text = "3880531013" 
+    #ET.SubElement(root, "identifier", displayLabel="print", repeatId="14", type="ismn").text = "9790060115615"
+    ET.SubElement(root, "extent").text = "355 sidor"
+    physicalDescription = ET.SubElement(root, "physicalDescription")
+
+    other_information=json_dict['Other information']
+
+    ET.SubElement(physicalDescription, "extent").text = json_dict['Other information']['Number of pages']
+    #dateOther_patent = ET.SubElement(root, "dateOther", type="patent") 
+    #ET.SubElement(dateOther_patent, "year").text = "2022" 
+    #ET.SubElement(dateOther_patent, "month").text = "12" 
+    #ET.SubElement(dateOther_patent, "day").text = "04" 
+    #ET.SubElement(root, "imprint").text = "Uppsala" 
+    #academicSemester = ET.SubElement(root, "academicSemester") 
+    #ET.SubElement(academicSemester, "year").text = "2023" 
+    #ET.SubElement(academicSemester, "semester").text = "ht" 
+
+    #
+    #studentDegree = ET.SubElement(root, "studentDegree") 
+    #ET.SubElement(studentDegree, "degreeLevel").text = "M2" 
+    #ET.SubElement(studentDegree, "universityPoints").text = "10" 
+    #course = ET.SubElement(studentDegree, "course") 
+    #ET.SubElement(course, "linkedRecordType").text = "diva-course" 
+    #ET.SubElement(course, "linkedRecordId").text = "444" 
+    #programme = ET.SubElement(studentDegree, "programme") 
+    #ET.SubElement(programme, "linkedRecordType").text = "diva-programme" 
+    #ET.SubElement(programme, "linkedRecordId").text = "444" 
+    #relatedItem_conference = ET.SubElement(root, "relatedItem", type="conference") 
+    #titleInfo_conference = ET.SubElement(relatedItem_conference, "titleInfo", lang="swe") 
+    #ET.SubElement(titleInfo_conference, "title").text = "Huvudtitel för konferens" 
+    #ET.SubElement(titleInfo_conference, "subTitle").text = "Undertitel för konferens" 
+    #relatedItem_series = ET.SubElement(root, "relatedItem", repeatId="15", type="series") 
+    #series = ET.SubElement(relatedItem_series, "series") 
+    #ET.SubElement(series, "linkedRecordType").text = "diva-series" 
+    #ET.SubElement(series, "linkedRecordId").text = "diva-series:1437068740596935"
+    #relatedItem_journal = ET.SubElement(root, "relatedItem", type="journal") 
+    #journal = ET.SubElement(relatedItem_journal, "journal") 
+    #ET.SubElement(journal, "linkedRecordType").text = "diva-journal" 
+    #ET.SubElement(journal, "linkedRecordId").text = "444" 
+    #relatedItem_book = ET.SubElement(root, "relatedItem", type="book") 
+    #titleInfo_book = ET.SubElement(relatedItem_book, "titleInfo", lang="swe") 
+    #ET.SubElement(titleInfo_book, "title").text = "Huvudtitel för bok" 
+    # ET.SubElement(titleInfo_book, "subTitle").text = "Undertitel för bok" 
+    # ET.SubElement(relatedItem_book, "note", type="statementOfResponsibility").text = "Redaktör för bok" 
+    # originInfo_book = ET.SubElement(relatedItem_book, "originInfo") 
+    # dateIssued_book = ET.SubElement(originInfo_book, "dateIssued") 
+    # ET.SubElement(dateIssued_book, "year").text = "2021" 
+    # ET.SubElement(dateIssued_book, "month").text = "12" 
+    # ET.SubElement(dateIssued_book, "day").text = "03" 
+    # copyrightDate_book = ET.SubElement(originInfo_book, "copyrightDate") 
+    # ET.SubElement(copyrightDate_book, "year").text = "2021" 
+    # ET.SubElement(copyrightDate_book, "month").text = "11" 
+    # ET.SubElement(copyrightDate_book, "day").text = "05" 
+    # dateOther_book = ET.SubElement(originInfo_book, "dateOther", type="online") 
+    # ET.SubElement(dateOther_book, "year").text = "2021" 
+    # ET.SubElement(dateOther_book, "month").text = "10" 
+    # ET.SubElement(dateOther_book, "day").text = "04" 
+    # agent_book = ET.SubElement(originInfo_book, "agent") 
+    # publisher_book = ET.SubElement(agent_book, "publisher", repeatId="16") 
+    # ET.SubElement(publisher_book, "linkedRecordType").text = "diva-publisher" 
+    # ET.SubElement(publisher_book, "linkedRecordId").text = "diva-publisher:1437068056503025" 
+    # role_book = ET.SubElement(agent_book, "role") 
+    # ET.SubElement(role_book, "roleTerm").text = "pbl" 
+    # place_book = ET.SubElement(originInfo_book, "place", repeatId="17") 
+    # ET.SubElement(place_book, "placeTerm").text = "Uppsala" 
+    # ET.SubElement(originInfo_book, "edition").text = "2" 
+    # ET.SubElement(relatedItem_book, "identifier", displayLabel="print", repeatId="18", type="isbn").text = "3880531013" 
+    # part_book = ET.SubElement(relatedItem_book, "part") 
+    # extent_book = ET.SubElement(part_book, "extent") 
+    # ET.SubElement(extent_book, "start").text = "1" 
+    # ET.SubElement(extent_book, "end").text = "350" 
+    # relatedItem_series_book = ET.SubElement(relatedItem_book, "relatedItem", repeatId="19", type="series") 
+    # series_book = ET.SubElement(relatedItem_series_book, "series") 
+    # ET.SubElement(series_book, "linkedRecordType").text = "diva-series" 
+    # ET.SubElement(series_book, "linkedRecordId").text = "diva-series:1437068740596935" 
+    # relatedItem_conferencePublication = ET.SubElement(root, "relatedItem", type="conferencePublication") 
+    # titleInfo_conferencePublication = ET.SubElement(relatedItem_conferencePublication, "titleInfo", lang="swe") 
+    # ET.SubElement(titleInfo_conferencePublication, "title").text = "Huvudtitel för proceeding" 
+    # ET.SubElement(titleInfo_conferencePublication, "subTitle").text = "Undertitel för proceeding" 
+    # ET.SubElement(relatedItem_conferencePublication, "note", type="statementOfResponsibility").text = "Redaktör för proceeding" 
+    # originInfo_conferencePublication = ET.SubElement(relatedItem_conferencePublication, "originInfo") 
+    # dateIssued_conferencePublication = ET.SubElement(originInfo_conferencePublication, "dateIssued") 
+    # ET.SubElement(dateIssued_conferencePublication, "year").text = "2022" 
+    # ET.SubElement(dateIssued_conferencePublication, "month").text = "12" 
+    # ET.SubElement(dateIssued_conferencePublication, "day").text = "04" 
+    # copyrightDate_conferencePublication = ET.SubElement(originInfo_conferencePublication, "copyrightDate") 
+    # ET.SubElement(copyrightDate_conferencePublication, "year").text = "2022" 
+    # ET.SubElement(copyrightDate_conferencePublication, "month").text = "10" 
+    # ET.SubElement(copyrightDate_conferencePublication, "day").text = "01" 
+    # dateOther_conferencePublication = ET.SubElement(originInfo_conferencePublication, "dateOther", type="online") 
+    # ET.SubElement(dateOther_conferencePublication, "year").text = "2021" 
+    # ET.SubElement(dateOther_conferencePublication, "month").text = "10" 
+    # ET.SubElement(dateOther_conferencePublication, "day").text = "02" 
+    # agent_conferencePublication = ET.SubElement(originInfo_conferencePublication, "agent") 
+    # publisher_conferencePublication = ET.SubElement(agent_conferencePublication, "publisher", repeatId="20") 
+    # ET.SubElement(publisher_conferencePublication, "linkedRecordType").text = "diva-publisher" 
+    # ET.SubElement(publisher_conferencePublication, "linkedRecordId").text = "diva-publisher:1437068056503025" 
+    # role_conferencePublication = ET.SubElement(agent_conferencePublication, "role") 
+    # ET.SubElement(role_conferencePublication, "roleTerm").text = "pbl" 
+    # place_conferencePublication = ET.SubElement(originInfo_conferencePublication, "place", repeatId="21") 
+    # ET.SubElement(place_conferencePublication, "placeTerm").text = "Uppsala" 
+    # ET.SubElement(originInfo_conferencePublication, "edition").text = "3" 
+    # ET.SubElement(relatedItem_conferencePublication, "identifier", displayLabel="online", repeatId="22", type="isbn").text = "3880531015" 
+    # part_conferencePublication = ET.SubElement(relatedItem_conferencePublication, "part") 
+    # extent_conferencePublication = ET.SubElement(part_conferencePublication, "extent") 
+    # ET.SubElement(extent_conferencePublication, "start").text = "1" 
+    # ET.SubElement(extent_conferencePublication, "end").text = "350"
+    # relatedItem_series_conferencePublication = ET.SubElement(relatedItem_conferencePublication, "relatedItem", repeatId="23", type="series") 
+    # series_conferencePublication = ET.SubElement(relatedItem_series_conferencePublication, "series") 
+    # ET.SubElement(series_conferencePublication, "linkedRecordType").text = "diva-series" 
+    # ET.SubElement(series_conferencePublication, "linkedRecordId").text = "diva-series:1437068740596935" 
+    # relatedItem_funder = ET.SubElement(root, "relatedItem", repeatId="24", type="funder") 
+    # funder = ET.SubElement(relatedItem_funder, "funder") 
+    # ET.SubElement(funder, "linkedRecordType").text = "diva-funder" 
+    # ET.SubElement(funder, "linkedRecordId").text = "diva-funder:1437067710216461" 
+    # relatedItem_initiative = ET.SubElement(root, "relatedItem", type="initiative") 
+    # ET.SubElement(relatedItem_initiative, "initiative", repeatId="25").text = "diabetes" 
+    # relatedItem_project = ET.SubElement(root, "relatedItem", type="project") 
+    # project = ET.SubElement(relatedItem_project, "project") 
+    # ET.SubElement(project, "linkedRecordType").text = "diva-project" 
+    # ET.SubElement(project, "linkedRecordId").text = "444" 
+    # relatedItem_researchData = ET.SubElement(root, "relatedItem", repeatId="26", type="researchData") 
+    # titleInfo_researchData = ET.SubElement(relatedItem_researchData, "titleInfo", lang="swe") 
+    # ET.SubElement(titleInfo_researchData, "title").text = "Huvudtitel forskningsdata" 
+    # ET.SubElement(titleInfo_researchData, "subTitle").text = "Undertitel forskningsdata" 
+    # ET.SubElement(relatedItem_researchData, "identifier", type="doi").text = "10.1000/182" 
+    # location_researchData = ET.SubElement(relatedItem_researchData, "location", repeatId="27") 
+    # ET.SubElement(location_researchData, "url").text = "url.se" 
+    # ET.SubElement(location_researchData, "displayLabel").text = "En länktext"
+    # related = ET.SubElement(root, "related", repeatId="28", type="constituent")
+    # output = ET.SubElement(related, "output", repeatId="29")
+    # ET.SubElement(output, "linkedRecordType").text = "diva-output"
+    # ET.SubElement(output, "linkedRecordId").text = "diva-output:1523950164148129"
+    # degree_granting_institution = ET.SubElement(root, "degreeGrantingInstitution", type="corporate")
+    # organisation = ET.SubElement(degree_granting_institution, "organisation")
+    # ET.SubElement(organisation, "linkedRecordType").text = "diva-organisation"
+    # ET.SubElement(organisation, "linkedRecordId").text = "diva-organisation:1530219071900116"
+    # role = ET.SubElement(degree_granting_institution, "role")
+    # ET.SubElement(role, "roleTerm").text = "dgg"
+    # relatedItem_defence = ET.SubElement(root, "relatedItem", type="defence") 
+    # dateOther_defence = ET.SubElement(relatedItem_defence, "dateOther", type="defence") 
+    # ET.SubElement(dateOther_defence, "year").text = "1988" 
+    # ET.SubElement(dateOther_defence, "month").text = "11" 
+    # ET.SubElement(dateOther_defence, "day").text = "01" 
+    # ET.SubElement(dateOther_defence, "hh").text = "10" 
+    # ET.SubElement(dateOther_defence, "mm").text = "30" 
+    # ET.SubElement(relatedItem_defence, "location").text = "En plats för disputationen" 
+    # ET.SubElement(relatedItem_defence, "address").text = "Doktorsgatan 5" 
+    # place_defence = ET.SubElement(relatedItem_defence, "place") 
+    # ET.SubElement(place_defence, "placeTerm").text = "Uppsala" 
+    # language_defence = ET.SubElement(relatedItem_defence, "language") 
+    # ET.SubElement(language_defence, "languageTerm", authority="iso639-2b", type="code").text = "swe" 
+    # ET.SubElement(root, "accessCondition", authority="kb.se").text = "gratis" 
+    # localGenericMarkup = ET.SubElement(root, "localGenericMarkup", repeatId="30") 
+    # ET.SubElement(localGenericMarkup, "linkedRecordType").text = "diva-localGenericMarkup" 
+    # ET.SubElement(localGenericMarkup, "linkedRecordId").text = "444" 
+    # admin = ET.SubElement(root, "admin") 
+    # ET.SubElement(admin, "reviewed").text = "true" 
+    # adminInfo = ET.SubElement(root, "adminInfo") 
+    # ET.SubElement(adminInfo, "visibility").text = "published" 
+    # location_orderLink = ET.SubElement(root, "location", displayLabel="orderLink") 
+    # ET.SubElement(location_orderLink, "url").text = "url.se" 
+    # ET.SubElement(location_orderLink, "displayLabel").text = "En länktext" 
+
+
+
+# record id och URL endpoints
+RECORDID_ENDPOINT = {
+    "output": "diva-output",
+    "publisher": "diva-publisher",
+    "journal": "diva-journal",
+    "funder": "diva-funder",
+    "publisher": "diva-publisher",
+    "person": "diva-person",
+    "series": "diva-series",
+    "subject": "diva-subject",
+    "course": "diva-course",
+    "project": "diva-project",
+    "programme": "diva-programme",
+    "topOrganisation": "diva-topOrganisation",
+    "partOfOrganisation": "diva-partOfOrganisation",
+    "localGenericMarkup": "diva-localGenericMarkup",
+}
+
+# basic url for record
+basic_urls = {
+    "preview": 'https://cora.epc.ub.uu.se/diva/rest/record/',
+    "pre": 'https://pre.diva-portal.org/rest/record/',
+    "dev": 'http://130.238.171.238:38082/diva/rest/record/',
+}
+
+# create the record and post
+def create(root, record_type):
+    global Verbose_Flag
+    if Verbose_Flag:
+        print(f"entering create(root, {record_type})")
+
+    xml_headers = {'Content-Type':'application/vnd.cora.record+xml', 'Accept':'application/vnd.cora.record+xml', 'authToken': app_token_client.get_auth_token()}
+    #print(xml_headers)
+    output_str = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"+ET.tostring(root).decode("UTF-8")
+    response = requests.post(f"{basic_urls[system]}{RECORDID_ENDPOINT[record_type]}", data=output_str, headers=xml_headers)
+    print(f"{response.status_code=}, {response.text=}, {response.headers=}")
+    print(output_str) # <-- visar i konsollen vad man skickar in vid en create
+    #print(f"{basic_urls[system]}{RECORDID_ENDPOINT[record_type]}") #record_type
+    #print(xml_headers)
+
+# create chosen record
+def createRecord(record_type):
+    global Verbose_Flag
+    if Verbose_Flag:
+        print(f"entering createRecord({record_type})")
+    id = '444444'
+    root = ET.Element(record_type) # skapar ett root-element för xml:en
+    recordInfo(id, root, record_type) # funktion som skapar recordInfo-delen
+    output(root) # create a diva-output record
+    create(root, record_type) # creates record and posts
+
+
+def start():
+    global data_logger
+    global Verbose_Flag
+    global json_dict
+
+    Verbose_Flag=True
+
+#    login_logger = RunRotatingLogger('login', 'logs/apptokenlog.txt').get()
+#    login_logger.info(f"_handle_login_response:{response}")
+    
+    data_logger = RunRotatingLogger('data', 'logs/data_processing.txt').get()
+    data_logger.info("Data processing started")
+    
+    
+    # for testing by GQMJr
+    print("made it to start()")
+
+    starttime = time.time()
+    start_app_token_client()
+    
+    auth_token = app_token_client.get_auth_token()
+    print(f"{auth_token}")
+
+    if False:
+        test_block1()
+
+    # try creating a record
+    Verbose_Flag=True
+    createRecord('output')
     print(f'Tidsåtgång: {time.time() - starttime}')
 
     # shutdown in an orderly maner by cancelling the timer for the authToken
@@ -1854,8 +2192,8 @@ def validate_record(data_record):
     global data_logger
     
     auth_token = app_token_client.get_auth_token()
-    validate_headers_xml = {'Content-Type':'application/vnd.uub.workorder+xml',
-                            'Accept':'application/vnd.uub.record+xml', 'authToken':auth_token}
+    validate_headers_xml = {'Content-Type':'application/vnd.cora.workorder+xml',
+                            'Accept':'application/vnd.cora.record+xml', 'authToken':auth_token}
     validate_url = ConstantsData.BASE_URL[system] + 'workOrder'
     newRecordToCreate = new_record_build(data_record)
     oldId_fromSource = CommonData.get_oldId(data_record)
@@ -1877,11 +2215,13 @@ def create_record(data_record):
     global data_logger
     
     auth_token = app_token_client.get_auth_token()
-    headersXml = {'Content-Type':'application/vnd.uub.record+xml',
-                  'Accept':'application/vnd.uub.record+xml', 'authToken':auth_token}
+    headersXml = {'Content-Type':'application/vnd.cora.record+xml',
+                  'Accept':'application/vnd.cora.record+xml', 'authToken':auth_token}
     urlCreate = ConstantsData.BASE_URL[system] + recordType
     recordToCreate = new_record_build(data_record)
-    oldId_fromSource = CommonData.get_oldId(data_record)
+    #oldId_fromSource = CommonData.get_oldId(data_record)
+    oldId_fromSource=None
+
     output = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" + ET.tostring(recordToCreate).decode("UTF-8")
     response = requests.post(urlCreate, data=output, headers=headersXml)
 #    print(response.status_code, response.text)
@@ -1892,5 +2232,53 @@ def create_record(data_record):
     return response.text
 
 
-if __name__ == "__main__":
+def main(argv):
+    global Verbose_Flag
+    global json_dict
+
+    parser = optparse.OptionParser()
+
+    parser.add_option('-v', '--verbose',
+                      dest="verbose",
+                      default=False,
+                      action="store_true",
+                      help="Print lots of output to stdout"
+    )
+
+    options, remainder = parser.parse_args()
+
+    Verbose_Flag=options.verbose
+    if Verbose_Flag:
+        print('ARGV      :', sys.argv[1:])
+        print('VERBOSE   :', options.verbose)
+        print('REMAINING :', remainder)
+
+    if (len(remainder) < 1):
+        print("using default: fordiva-cleaned.json")
+        json_filename='fordiva-cleaned.json'
+    else:
+        json_filename=remainder[0]
+
+    if not json_filename:
+        print("Unknown source for the JSON: {}".format(json_filename))
+        return
+
+    json_dict=dict()
+
+    try:
+        with open(json_filename, 'r', encoding='utf-8') as json_FH:
+            json_string=json_FH.read()
+            json_dict=json.loads(json_string)
+    except FileNotFoundError:
+        print("File not found: {json_filename}".format(json_filename))
+        return
+
+    if Verbose_Flag:
+        print("read JSON: {}".format(json_dict))
+
     start()
+
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
